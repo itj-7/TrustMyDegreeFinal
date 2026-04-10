@@ -1,0 +1,52 @@
+[
+  {
+    "id": "1",
+    "image": "/greenissue.png",
+    "name": "Engineering Degree",
+    "type": "Artificial Intelligence",
+    "date": "15 Juin 2025",
+    "code": "#1847",
+    "state": "verified",
+    "pdf": "/certificates/licence.pdf"
+  },
+  {
+    "id": "2",
+    "image": "/navlogo.png",
+    "name": "Summer Internship",
+    "type": "Blockchain Development",
+    "date": "Jully 2024",
+    "code": "#1562",
+    "state": "verified",
+    "pdf": "/certificates/master.pdf"
+  },
+  {
+    "id": "3",
+    "image": "/navlogo.png",
+    "name": "Summer Internship",
+    "type": "Blockchain Development",
+    "date": "Jully 2024",
+    "code": "#1562",
+    "state": "verified",
+    "pdf": "/certificates/master.pdf"
+  },
+  {
+    "id": "4",
+    "image": "/navlogo.png",
+    "name": "Summer Internship",
+    "type": "Blockchain Development",
+    "date": "Jully 2024",
+    "code": "#1562",
+    "state": "verified",
+    "pdf": "/certificates/master.pdf"
+  },
+  {
+    "id": "5",
+    "image": "/revokedcert.png",
+    "name": "Cybersecurity Training",
+    "type": "Specialization Certificate",
+    "date": "March 2024",
+    "code": "#1421",
+    "state": "not Verified ",
+    "pdf": "/certificates/engineer.pdf"
+  }
+]

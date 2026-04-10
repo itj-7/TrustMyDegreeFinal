@@ -1,0 +1,294 @@
+body {
+  margin: 0;
+}
+
+.loginBody {
+  margin: 0px;
+  padding: 0px;
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 0.8fr 1fr;
+  grid-template-rows: auto;
+}
+
+.left {
+  /* background: linear-gradient(to top, #020617, #162456e5, #162456); */
+  background-color: white;
+  padding: 40px;
+}
+
+.toplogo1 {
+  width: 45%;
+  background-color: #f8fafc;
+  padding: 5px 0px 5px 10px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+}
+
+.toplogo1 img {
+  width: 45px;
+  height: 45px;
+}
+.toplogo1 > div {
+  text-align: start;
+}
+
+.toplogo1 > div > h2 {
+  color: #1c398e;
+  margin: 0px;
+}
+.toplogo1 > div > p {
+  color: #51a2ff;
+  font-size: 12px;
+  margin: -5px 0px 0px 0px;
+}
+
+.left h1 {
+  font-family: "Arial";
+  font-size: 48px;
+  text-align: left;
+  font-weight: bold;
+  font-style: italic;
+}
+.span {
+  color: #2b7fff;
+}
+
+.left .description {
+  color: #64748b;
+  font-size: 20px;
+  text-align: left;
+  line-height: 40px;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.verification {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.verification img {
+  width: 40px;
+  height: 40px;
+}
+
+.inside h4 {
+  font-size: 15px;
+  text-align: left;
+  position: relative;
+  top: 10px;
+}
+.inside p {
+  color: #64748b;
+  font-size: 15px;
+  text-align: left;
+  position: relative;
+  bottom: 10px;
+}
+
+.network {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.network img {
+  width: 40px;
+  height: 40px;
+}
+
+.left .copyright {
+  color: #64748b;
+  font-size: 15px;
+  text-align: left;
+  position: relative;
+  top: 10px;
+}
+
+/* right side */
+
+.right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #061028;
+}
+
+.send {
+  width: 65%;
+  height: 70%;
+  padding: 40px;
+  border-radius: 30px;
+  background-color: #07122b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  position: relative;
+  bottom: 20px;
+}
+
+.toplogo2 {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+}
+
+.toplogo2 img {
+  width: 50px;
+  height: 50px;
+}
+
+.toplogo2 > div {
+  text-align: start;
+  padding-left: 5px;
+}
+
+.toplogo2 > div > .iff {
+  color: white;
+  font-size: 25px;
+  margin: 0px;
+}
+.toplogo2 > div > p {
+  color: #51a2ff;
+  font-size: 13px;
+  margin: -4px 0px 0px 0px;
+}
+
+.send h2 {
+  width: 100%;
+  font-size: 30px;
+  font-weight: bold;
+  text-align: left;
+  color: white;
+  position: relative;
+  bottom: 15px;
+  left: 20px;
+}
+.send .small {
+  width: 100%;
+  color: #bedbffb2;
+  font-size: 15px;
+  text-align: left;
+  position: relative;
+  bottom: 26px;
+  left: 20px;
+}
+
+.email {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  left: 20px;
+}
+
+.icon1 {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 30px;
+  left: 15px;
+  pointer-events: none;
+}
+
+.password {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  position: relative;
+  left: 20px;
+}
+
+.lab {
+  color: #bedbffb2;
+  font-size: 13px;
+  text-align: left;
+  margin-left: 13px;
+  margin-bottom: 5px;
+}
+
+.inp {
+  width: 80%;
+  color: blue;
+  border: 1px solid #193cb880;
+  border-radius: 14px;
+  padding: 10px 0px 10px 35px;
+  box-shadow: 0 0 1px blue;
+}
+.inp:hover {
+  border-color: #193cb8;
+  box-shadow: 0 0 10px blue;
+  transition: all 0.3s ease;
+}
+.inp:focus {
+  border-color: #193cb8;
+  box-shadow: 0 0 10px blue;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input::placeholder {
+  color: #193cb880;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.sign {
+  width: 88%;
+  height: 40px;
+  padding: 10px;
+  background-color: #2b7fff;
+  color: white;
+  font-size: 15px;
+  border: 1px solid #193cb880;
+  border-radius: 14px;
+  margin-top: 40px;
+  box-shadow: 0 0 5px white;
+  position: relative;
+  right: 7px;
+}
+
+.sign:hover {
+  background-color: #193cb880;
+  box-shadow: 0 0 10px white;
+  transition: all 0.3s ease;
+}
+
+.hr {
+  width: 84%;
+  border-color: #193cb880;
+  position: relative;
+  right: 10px;
+  margin-top: 40px;
+}
+
+.send .last {
+  color: #bedbffb2;
+  font-size: 13px;
+  text-align: left;
+  position: relative;
+  right: 7px;
+}
+.last a {
+  color: #2b7fff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

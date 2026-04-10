@@ -1,0 +1,22 @@
+.admin {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+
+  grid-template-areas: "nav content";
+  min-height: 100vh;
+}
+
+.nav {
+  /* height: 100vh; */
+  min-height: 100vh;
+  background-color: #0f1e3f;
+  grid-area: nav;
+}
+
+.content {
+  grid-area: content;
+  background-color: #f9fafb; /* same as your Issue main background */
+  min-height: 100vh; /* cover full viewport height */
+  display: flex;
+  flex-direction: column;
+}

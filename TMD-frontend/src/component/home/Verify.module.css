@@ -1,0 +1,132 @@
+.main-content {
+  height: 87vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff;
+  cursor: default;
+}
+
+.main-content > h1 {
+  color: #000d5c;
+}
+
+.main-content > h1 > span {
+  color: #2484f8;
+}
+
+.main-content > p {
+  width: 35%;
+  color: #62748e;
+}
+
+.verify {
+  width: 35%;
+  border: 2px solid white;
+  border-radius: 20px;
+  box-shadow: 1px 1px 20px lightgray;
+  padding: 5px;
+  background-color: #ffffff;
+  margin-top: 15px;
+}
+
+.info {
+  text-align: start;
+  margin-left: 10px;
+}
+
+.inputBox {
+  position: relative;
+}
+
+.info > h6 {
+  font-family: Arimo;
+  font-weight: 700;
+  color: #99a1af;
+  margin-bottom: 4px;
+}
+
+.inputBox > img {
+  position: absolute;
+  top: 13px;
+  left: 8px;
+  width: 20px;
+}
+
+.inputBox > input {
+  width: 85%;
+  padding: 15px 15px 15px 35px;
+  background-color: #f9fafb;
+  border: 1px solid #00000000;
+  border-radius: 10px;
+  margin-top: 0px;
+}
+
+.inputBox > input:focus {
+  outline: 1px solid blue;
+  border: 1px solid #2563eb;
+  box-shadow: 1px 1px 4px navy;
+}
+
+.submit {
+  width: 70%;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #3b82f6;
+  color: white;
+  font-size: 15px;
+  border: 1px solid #3b82f6;
+  border-radius: 20px;
+  box-shadow: 1px 1px 5px blue;
+  cursor: pointer;
+}
+
+.submit:hover {
+  background-color: #000d5c;
+  box-shadow: 1px 1px 9px blue;
+}
+
+.main-content > div {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.online {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  background-color: #eef2f7;
+  border-radius: 15px;
+}
+
+.online > img {
+  margin: 2px 1px 2px 8px;
+}
+
+.online > h6 {
+  color: #45556c;
+  font-weight: 400;
+  margin: 2px 9px 2px 3px;
+}
+
+.secure {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.secure > img {
+  margin: 2px 1px 2px 20px;
+}
+.secure > h6 {
+  color: #45556c;
+  font-weight: 400;
+  margin: 2px 9px 2px 3px;
+}

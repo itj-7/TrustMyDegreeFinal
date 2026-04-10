@@ -1,0 +1,207 @@
+import styles from "./RequestStudent.module.css";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+function RequestStudent() {
+  const editorRef = useRef(null);
+
+  const [user, setUser] = useState(null);
+  const [doc, setDoc] = useState("");
+  const [reason, setReason] = useState("");
+  const [delivery, setDelivery] = useState("");
+  const [priority, setPriority] = useState("");
+  const [openMenu, setOpenMenu] = useState(false);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/student/user", {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+})
+      .then((response) => response.json())
+      .then((data) => setUser(data))
+      .catch((err) => console.log(err));
+  }, []);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    fetch("https://localhost:500/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doc, reason, delivery, priority }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+
+        setDoc("");
+        setReason("");
+        setDelivery("");
+        setPriority("");
+
+        if (editorRef.current) {
+          editorRef.current.textContent = "";
+        }
+      })
+      .catch((err) => window.alert(err));
+  }
+
+  function clear() {
+    setDoc("");
+    setReason("");
+    setDelivery("");
+    setPriority("");
+    if (editorRef.current) {
+      editorRef.current.textContent = "";
+    }
+  }
+
+  useEffect(() => {
+    window.scrollTo(0, 0); // scroll to top
+  }, []);
+
+  const navigate = useNavigate();
+
+  // log out function
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // remove auth
+    navigate("/", { replace: true });//remove the browser back button open paltform.
+  };
+  return (
+    <div className={styles["main-content"]}>
+      <div className={styles.login}>
+        <div className={styles.image}>
+          <img
+            src="/setting.png"
+            alt="setting"
+            onClick={() => setOpenMenu(!openMenu)}
+            className={openMenu ? styles.rotate : ""}
+          />
+          {openMenu && (
+            <div className={styles.menu}>
+              <ul className={styles.list}>
+                <li>
+                  <Link to="/student/Settings">Parameters</Link>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.info}>
+          <img
+            src={user?.avatar || "/totalcertaficates.png"}
+            alt="ava"
+            className={styles.student}
+          />
+          <div className={styles.subinfo}>
+            <h4>{user ? user.name : "guest"}</h4>{" "}
+            <p>{user ? user.id : "fake id"}</p>
+          </div>
+          <img
+            src="/exit.png"
+            alt="exit"
+            onClick={handleLogout}
+            className={styles.exit}
+          />
+        </div>
+      </div>
+
+      <div className={styles.backto}>
+        <Link to="/student/DashboardStudent">&larr; Back to Dashboard</Link>
+      </div>
+
+      <div className={styles.content}>
+        <div className={styles.title}>
+          <h1>Request Official Document</h1>
+          <p>
+            Submit a request to your university. Once approved, your document
+            will be uploaded and secured in your digital wallet.
+          </p>
+        </div>
+
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.document}>
+            <label>1. Document Type</label>
+            <input
+              type="text"
+              value={doc}
+              onChange={(e) => setDoc(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.reason}>
+            <label>2. Reason for Request</label>
+            <div
+              ref={editorRef}
+              contenteditable="true"
+              className={styles.editor}
+              onInput={(e) => setReason(e.currentTarget.textContent)}
+            ></div>
+          </div>
+
+          <div className={styles.option}>
+            <h4>3. Delivery Option</h4>
+            <div>
+              <div className={styles.option1}>
+                <input
+                  type="radio"
+                  name="delivery"
+                  value="digital"
+                  checked={delivery === "digital"}
+                  onChange={(e) => setDelivery(e.target.value)}
+                />
+                <div>
+                  <h4>Digital copy only</h4>
+                  <p>Fast & Free (Blockchain secured)</p>
+                </div>
+              </div>
+
+              <div className={styles.option1}>
+                <input
+                  type="radio"
+                  name="delivery"
+                  value="physical"
+                  checked={delivery === "physical"}
+                  onChange={(e) => setDelivery(e.target.value)}
+                />
+                <div>
+                  <h4>Official physical copy</h4>
+                  <p>Includes stamp & signature</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.priority}>
+            <label>4. Priority Level</label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+            >
+              <option value="" disabled>
+                Choose
+              </option>
+              <option value="urgent">Urgent</option>
+              <option value="normal">Normal</option>
+            </select>
+          </div>
+
+          <div className={styles.buttons}>
+            <input type="submit" value="Submit Request" />
+            <button type="button" onClick={clear}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className={styles.bottom}>
+        <h4>Secured by TrustMyDegree Protocol • </h4>
+      </div>
+    </div>
+  );
+}
+
+export default RequestStudent;

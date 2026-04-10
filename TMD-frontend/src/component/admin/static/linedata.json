@@ -1,0 +1,62 @@
+[
+  {
+    "label": "January",
+    "verification": 200,
+    "Issuances": 150
+  },
+  {
+    "label": "February",
+    "verification": 300,
+    "Issuances": 200
+  },
+  {
+    "label": "March",
+    "verification": 234,
+    "Issuances": 117
+  },
+  {
+    "label": "April",
+    "verification": 434,
+    "Issuances": 542
+  },
+  {
+    "label": "May",
+    "verification": 332,
+    "Issuances": 198
+  },
+  {
+    "label": "Jun",
+    "verification": 224,
+    "Issuances": 432
+  },
+  {
+    "label": "July",
+    "verification": 511,
+    "Issuances": 325
+  },
+  {
+    "label": "August",
+    "verification": 114,
+    "Issuances": 119
+  },
+  {
+    "label": "September",
+    "verification": 234,
+    "Issuances": 117
+  },
+  {
+    "label": "October",
+    "verification": 251,
+    "Issuances": 521
+  },
+  {
+    "label": "Novermber",
+    "verification": 454,
+    "Issuances": 200
+  },
+  {
+    "label": "December",
+    "verification": 400,
+    "Issuances": 300
+  }
+]

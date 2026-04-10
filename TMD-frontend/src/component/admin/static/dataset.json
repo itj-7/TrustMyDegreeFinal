@@ -1,0 +1,18 @@
+[
+  {
+    "label": "AI",
+    "value": "100"
+  },
+  {
+    "label": "Cyber",
+    "value": "80"
+  },
+  {
+    "label": "Network",
+    "value": "70"
+  },
+  {
+    "label": "other",
+    "value": "20"
+  }
+]
