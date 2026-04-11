@@ -23,12 +23,16 @@ const dashboard = async (req, res) => {
       where: { studentId: userId },
       orderBy: { issueDate: "desc" },
     });
+    const requests = await prisma.request.findMany({
+      where: { studentId: userId },
+    });
     res.status(200).json({
       fullName: student.fullName,
       activeCertificates,
       totalCertificates,
       certificates,
       lastissuedCertificate,
+      requests,
     });
   } catch (err) {
     res.status(500).json({ error: "an error occurred in the server" });
