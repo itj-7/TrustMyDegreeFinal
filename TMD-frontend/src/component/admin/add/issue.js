@@ -53,15 +53,17 @@ function Issue() {
     form.append("graduationDate", formData.date);
     form.append("excel", formData.file); //  backend expects "excel"
 
-    try {
-      const res = await api.post("/admin/import", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setSuccess(`✅ ${res.data.created} certificates issued successfully!`);
-      handleReset();
-    } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
-    }
+  try {
+  const res = await api.post("/admin/import", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  console.log("RESPONSE:", res.data);
+  setSuccess(`✅ ${res.data.created} certificates issued successfully!`);
+  handleReset();
+} catch (err) {
+  console.log("ERROR:", err.response?.data);
+  setError(err.response?.data?.message || "Something went wrong");
+}
   }
 
   return (
@@ -72,7 +74,7 @@ function Issue() {
         </div>
         <div className={styles.info}>
           <div className={styles.subinfo}>
-            <h4>{user ? user.FullName : "guest"}</h4>
+            <h4>{user ? user.name : "guest"}</h4>
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
           <img src="/totalcertaficates.png" alt="avatar" />
