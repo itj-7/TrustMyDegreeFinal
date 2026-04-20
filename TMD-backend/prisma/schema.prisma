@@ -65,11 +65,14 @@ model Verification {
 }
 
 model Contact {
-  id        String   @id @default(uuid())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  institution  String?
+  message      String
+  agreedToPolicy Boolean @default(false)
+  createdAt    DateTime @default(now())
 }
 
 enum Role {
