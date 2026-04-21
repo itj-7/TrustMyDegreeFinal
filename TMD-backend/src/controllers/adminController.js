@@ -2,6 +2,7 @@ const prisma = require("../config/prisma");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../utils/sendEmail");
 const XLSX = require("xlsx");
+const axios = require("axios");
 const generateDiplomaPDF = require("../utils/generatePDF");
 const universityDB = require("../config/universityDB");
 const { uploadPDFtoPinata } = require("../services/pinata.service");
@@ -526,16 +527,19 @@ const getStatistics = async (req, res) => {
 const downloadCertificate = async (req, res) => {
   try {
     const id = req.params.id;
-
     const certificate = await prisma.certificate.findUnique({ where: { id } });
 
     if (!certificate) return res.status(404).json({ message: "Certificate not found" });
     if (!certificate.ipfsHash) return res.status(404).json({ message: "Certificate file not found" });
 
-    res.status(200).json({
-      url: `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`
-    });
+    const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`;
+    const response = await axios.get(ipfsUrl, { responseType: "stream" });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="certificate_${id}.pdf"`);
+    response.data.pipe(res);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "an error occurred in the server" });
   }
 };

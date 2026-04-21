@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const axios = require("axios");
 const bcrypt = require("bcrypt");
 const path = require("path");
 const fs = require("fs");
@@ -30,6 +31,7 @@ const dashboard = async (req, res) => {
       certificates.map(async (cert) => {
         try {
           const chainData = await getCertificateData(cert.contractType, cert.blockchainCertId);
+          const graduationDate = new Date(Number(chainData.issueDate) * 1000).toISOString();
           return {
             id: cert.id,
             uniqueCode: cert.uniqueCode,
@@ -37,11 +39,12 @@ const dashboard = async (req, res) => {
             ipfsUrl: `https://gateway.pinata.cloud/ipfs/${cert.ipfsHash}`,
             status: cert.status,
             issueDate: cert.issueDate,
+            graduationDate,
             contractType: cert.contractType,
             type: cert.type,
             specialty: cert.specialty,
             chainData,
-          };
+};
         } catch {
           return {
             id: cert.id,
@@ -49,6 +52,7 @@ const dashboard = async (req, res) => {
             ipfsHash: cert.ipfsHash,
             status: cert.status,
             issueDate: cert.issueDate,
+            graduationDate: cert.issueDate,
             contractType: cert.contractType,
             type: cert.type,
             specialty: cert.specialty,
@@ -115,9 +119,12 @@ const downloadCertificate = async (req, res) => {
     if (certificate.studentId !== userId) return res.status(403).json({ message: "Access denied" });
     if (!certificate.ipfsHash) return res.status(404).json({ message: "Certificate file not found" });
 
-    res.status(200).json({
-      url: `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`
-    });
+    const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`;
+    const response = await axios.get(ipfsUrl, { responseType: "stream" });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="certificate_${id}.pdf"`);
+    response.data.pipe(res);
   } catch (err) {
     res.status(500).json({ error: "an error occurred in the server" });
   }
