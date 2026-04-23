@@ -60,6 +60,7 @@ function Verify() {
             <input
               type="text"
               placeholder="#1847"
+              value={code}
               onChange={(e) => setCode(e.target.value)}
             />
           </div>
