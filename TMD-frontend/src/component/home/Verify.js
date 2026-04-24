@@ -96,7 +96,8 @@ function Verify() {
             <strong>Specialty:</strong> {result.specialty}
           </p>
           <p>
-            <strong>Issue Date:</strong> {new Date(result.issueDate).toLocaleDateString("fr-FR")}
+            <strong>Issue Date:</strong>{" "}
+            {new Date(result.issueDate).toLocaleDateString("fr-FR")}
           </p>
           {result.contractType === "INTERNSHIP" && result.academicData && (
             <>
@@ -104,16 +105,24 @@ function Verify() {
                 <strong>Company:</strong> {result.academicData.companyName}
               </p>
               <p>
-                <strong>Start Date:</strong> {new Date(Number(result.academicData.startDate) * 1000).toLocaleDateString("fr-FR")}
+                <strong>City:</strong> {result.academicData.internshipCity}
               </p>
               <p>
-                <strong>End Date:</strong> {new Date(Number(result.academicData.endDate) * 1000).toLocaleDateString("fr-FR")}
+                <strong>Start Date:</strong>{" "}
+                {new Date(
+                  Number(result.academicData.startDate) * 1000,
+                ).toLocaleDateString("fr-FR")}
+              </p>
+              <p>
+                <strong>End Date:</strong>{" "}
+                {new Date(
+                  Number(result.academicData.endDate) * 1000,
+                ).toLocaleDateString("fr-FR")}
               </p>
             </>
           )}
         </div>
       )}
-        
 
       {/* REVOKED */}
       {status === "revoked" && (
