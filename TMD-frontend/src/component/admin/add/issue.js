@@ -87,8 +87,8 @@ const [formData, setFormData] = useState({ date: "", file: null, templateType: "
           <div className={styles.top}>
             <img className={styles.a} src="/greenissue.png" alt="green" />
             <div className={styles.hp}>
-              <h3>ISSUE A NEW CERTIFICATE</h3>
-              <p>CertiChain Academic Authentication Platform</p>
+              <h3>ISSUE A NEW DOCUMENT</h3>
+              <p>TrustMyDegree Academic Authentication Platform</p>
             </div>
             <img className={styles.f} src="/vector.png" alt="vect" />
           </div>

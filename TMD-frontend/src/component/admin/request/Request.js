@@ -277,12 +277,9 @@ function Request() {
                       </span>
                     </td>
                     <td className={styles.column}>
-                      <button 
-  className={styles.upload} 
-  onClick={() => uploadDocument(req.id)}
->
-  &#10515; upload
-</button>
+                      <button className={styles.upload} onClick={() => uploadDocument(req.id)}>
+                        &#10515; upload
+                      </button>
                     </td>
                     <td className={styles.column}>
                       <div className={styles.actions}>
