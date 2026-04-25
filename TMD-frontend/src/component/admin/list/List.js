@@ -7,6 +7,10 @@ function List() {
   const [user, setUser] = useState(null);
   const [certaficate, setCertaficate] = useState([]);
   const [search, setSearch] = useState("");
+  const [sortConfig, setSortConfig] = useState({
+  key: null,
+  direction: "asc",
+});
 
   // get user from localStorage
   useEffect(() => {
@@ -14,12 +18,25 @@ function List() {
     setUser({ fullName: role === "ADMIN" ? "Admin" : "Super Admin" });
   }, []);
 
-  // the new route we added 
+  // the new route we added
   useEffect(() => {
-    api.get("/admin/certificates")
+    api
+      .get("/admin/certificates")
       .then((res) => setCertaficate(res.data.certificates || []))
       .catch((err) => console.log(err));
   }, []);
+
+/*each column be sorted*/
+function handleSort(key) {
+  let direction = "asc";
+
+  if (sortConfig.key === key && sortConfig.direction === "asc") {
+    direction = "desc";
+  }
+
+  setSortConfig({ key, direction });
+}
+
 
   /* search bar filter - not changed */
   const filteredCertificates = certaficate.filter(
@@ -28,8 +45,33 @@ function List() {
       cert.student?.matricule?.toLowerCase().includes(search.toLowerCase()) ||
       cert.type?.toLowerCase().includes(search.toLowerCase()) ||
       cert.specialty?.toLowerCase().includes(search.toLowerCase()) ||
-      cert.status?.toLowerCase().includes(search.toLowerCase()),
-  );
+      cert.status?.toLowerCase().includes(search.toLowerCase()
+    ));
+
+  const sortedCertificates = [...filteredCertificates].sort((a, b) => {
+  if (!sortConfig.key) return 0;
+
+  let aValue;
+  let bValue;
+
+  switch (sortConfig.key) {
+    case "student":
+      aValue = a.student?.fullName || "";
+      bValue = b.student?.fullName || "";
+      break;
+    case "matricule":
+      aValue = a.student?.matricule || "";
+      bValue = b.student?.matricule || "";
+      break;
+    default:
+      aValue = a[sortConfig.key];
+      bValue = b[sortConfig.key];
+  }
+
+  if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+  if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+  return 0;
+});
 
   useEffect(() => {
     setcurentPage(1);
@@ -64,7 +106,7 @@ function List() {
   const Lastindex = currentPage * perPage;
   const Firstindex = Lastindex - perPage;
 
-  const records = filteredCertificates.slice(Firstindex, Lastindex);
+  const records =  sortedCertificates.slice(Firstindex, Lastindex);
   const numberofpages = Math.ceil(filteredCertificates.length / perPage);
   const currentGroup = Math.ceil(currentPage / pagesPerGroup);
 
@@ -93,12 +135,14 @@ function List() {
   }
 
   const [openMenu, setOpenMenu] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
-  
   function revokeCertificate(id) {
-    if (!window.confirm("Are you sure you want to revoke this certificate?")) return;
+    if (!window.confirm("Are you sure you want to revoke this certificate?"))
+      return;
 
-    api.put(`/admin/certificates/${id}/revoke`)
+    api
+      .put(`/admin/certificates/${id}/revoke`)
       .then(() => {
         const updated = certaficate.map((c) =>
           c.id === id ? { ...c, status: "REVOKED" } : c,
@@ -108,25 +152,69 @@ function List() {
       })
       .catch((err) => console.log(err));
   }
+  function toggleSelect(id) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.length === records.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(records.map((c) => c.id));
+    }
+  }
+
+  function bulkRevoke() {
+    const activeSelected = selectedIds.filter(
+      (id) => certaficate.find((c) => c.id === id)?.status !== "REVOKED",
+    );
+
+    if (activeSelected.length === 0) {
+      alert("All selected certificates are already revoked.");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to revoke ${activeSelected.length} certificate(s)?`,
+      )
+    )
+      return;
+
+    api
+      .put("/admin/certificates/bulk-revoke", { ids: activeSelected })
+      .then((res) => {
+        const updated = certaficate.map((c) =>
+          activeSelected.includes(c.id) ? { ...c, status: "REVOKED" } : c,
+        );
+        setCertaficate(updated);
+        setSelectedIds([]);
+        alert(res.data.message);
+      })
+      .catch((err) => console.log(err));
+  }
+
   function viewCertificate(id) {
-  const token = localStorage.getItem("token");
-  fetch(`http://localhost:5000/api/admin/certificates/${id}/download`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-    .then((res) => res.blob())
-    .then((blob) => {
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, "_blank");
+    const token = localStorage.getItem("token");
+    fetch(`http://localhost:5000/api/admin/certificates/${id}/download`, {
+      headers: { Authorization: `Bearer ${token}` },
     })
-    .catch((err) => console.log(err));
-}
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      })
+      .catch((err) => console.log(err));
+  }
 
   return (
     <div className={styles["main-content"]}>
       <div className={styles.login}>
-        <div className={styles.page}>
+       
           <h4>Certificate List</h4>
-        </div>
+        
         <div className={styles.info}>
           <div className={styles.subinfo}>
             <h4>{user ? user.fullName : "guest"}</h4>
@@ -154,20 +242,39 @@ function List() {
           <img src="/downloadsign.png" alt="search" />
           <button onClick={downloadExcel}>Export Excel</button>
         </div>
+
+        {selectedIds.length > 0 && (
+          <div className={styles.edit}>
+            <button
+              onClick={bulkRevoke}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                padding: "8px 16px",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              Revoke Selected ({selectedIds.length})
+            </button>
+          </div>
+        )}
       </div>
 
       <div className={styles.main}>
         <div className={styles.countainer}>
           <table className={styles.table}>
             <thead>
-              <tr className={styles.row}>
-                <th className={styles.colu}>ID</th>
-                <th className={styles.colu}>Student</th>
-                <th className={styles.colu}>Matricule</th>
-                <th className={styles.colu}>Type</th>
-                <th className={styles.colu}>Specialty</th>
-                <th className={styles.colu}>Issue Date</th>
-                <th className={styles.colu}>Statut</th>
+              <tr className={styles.row} >
+                <th className={styles.colu}onClick={() => handleSort("id")}>ID  {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}</th>
+                <th className={styles.colu}onClick={() => handleSort("student")}>Student  {sortConfig.key === "student" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}</th>
+                <th className={styles.colu}onClick={() => handleSort("matricule")}>Matricule  {sortConfig.key === "matricule" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}</th>
+                <th className={styles.colu}onClick={() => handleSort("type")}>Type  {sortConfig.key === "type" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}</th>
+                <th className={styles.colu}onClick={() => handleSort("specialty")}>Specialty  {sortConfig.key === "specialty" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}</th>
+                <th className={styles.colu} onClick={() => handleSort("issueDate")}>Issue Date  {sortConfig.key === "issueDate" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}</th>
+                <th className={styles.colu}onClick={() => handleSort("status")}>Statuts  {sortConfig.key === "status" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}</th>
                 <th className={styles.colu}>Actions</th>
               </tr>
             </thead>
@@ -175,10 +282,19 @@ function List() {
               {records.length > 0 ? (
                 records.map((cert) => (
                   <tr className={styles.row} key={cert.id}>
+                    <td className={styles.column}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(cert.id)}
+                        onChange={() => toggleSelect(cert.id)}
+                      />
+                    </td>
                     <td className={styles.column}>{cert.id.substring(0, 8)}...</td>
                     <td className={styles.column}>
                       <img src="/students.jpg" alt="student" />
-                      <span className={styles.student}>{cert.student?.fullName}</span>
+                      <span className={styles.student}>
+                        {cert.student?.fullName}
+                      </span>
                     </td>
                     <td className={styles.column}>{cert.student?.matricule}</td>
                     <td className={styles.column}>
@@ -208,22 +324,22 @@ function List() {
                           ⋮
                         </span>
                         {openMenu === cert.id && (
-  <div className={styles.menu}>
-    <button onClick={() => viewCertificate(cert.id)}>
-      View PDF
-    </button>
-    <button onClick={() => revokeCertificate(cert.id)}>
-      Revoke
-    </button>
-  </div>
-)}
+                          <div className={styles.menu}>
+                            <button onClick={() => viewCertificate(cert.id)}>
+                              View PDF
+                            </button>
+                            <button onClick={() => revokeCertificate(cert.id)}>
+                              Revoke
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr className={styles.row}>
-                  <td colSpan="8">No data found</td>
+                  <td colSpan="9">No data found</td>
                 </tr>
               )}
             </tbody>
@@ -233,7 +349,9 @@ function List() {
         <nav className={styles.arr}>
           <div className={styles.pagination}>
             <div className={styles["page-item"]}>
-              <button className={styles.change} onClick={prevPage}>prev</button>
+              <button className={styles.change} onClick={prevPage}>
+                prev
+              </button>
             </div>
             {numbers.map((n, i) => (
               <div
@@ -249,7 +367,9 @@ function List() {
               </div>
             ))}
             <div className={styles["page-item"]}>
-              <button className={styles.change} onClick={nextPage}>next</button>
+              <button className={styles.change} onClick={nextPage}>
+                next
+              </button>
             </div>
           </div>
         </nav>

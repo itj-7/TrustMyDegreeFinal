@@ -24,15 +24,17 @@ function Navbar() {
       </button>
 
       <nav className={isOpen ? "open" : ""}>
-        <div className="logo">
-          <img src="/logoproject.png" alt="navlogo" />
-          <div className="logo-text">
-            <h1>
-              TrustMy<span className="span">Dgree</span>
-            </h1>
-            <p>Verified Education</p>
+        <Link to="/admin/dashboard">
+          <div className="logo">
+            <img src="/logoproject.png" alt="navlogo" />
+            <div className="logo-text">
+              <h1>
+                TrustMy<span className="span">Dgree</span>
+              </h1>
+              <p>Verified Education</p>
+            </div>
           </div>
-        </div>
+        </Link>
 
         <div className="nav-links">
           <Link to="/admin/dashboard" onClick={() => setIsOpen(false)}>
@@ -41,15 +43,21 @@ function Navbar() {
           </Link>
 
           {role === "SUPER_ADMIN" && (
-            <Link to="/admin/authorisations">
-              <img src="/superadmine.png" alt="superadmine" />
-              <span className="same">Manage admins</span>
-            </Link>
+            <>
+              <Link to="/admin/authorisations" onClick={() => setIsOpen(false)}>
+                <img src="/superadmine.png" alt="superadmine" />
+                <span className="same">Manage admins</span>
+              </Link>
+              <Link to="/admin/audit" onClick={() => setIsOpen(false)}>
+                <img src="/navlist.png" alt="audit" />
+                <span className="same">Audit Trail</span>
+              </Link>
+            </>
           )}
 
           <Link to="/admin/add" onClick={() => setIsOpen(false)}>
             <img src="/naviss.png" alt="naviss" />
-            <span className="same ">issue certificate</span>
+            <span className="same ">issue Documents</span>
           </Link>
 
           <Link to="/admin/list" onClick={() => setIsOpen(false)}>
@@ -73,11 +81,9 @@ function Navbar() {
           </Link>
         </div>
 
-        <div className="out">
+        <div className="out" onClick={handleLogout}>
           <img src="/out.png" alt="out" />
-          <span className="logout" onClick={handleLogout}>
-            logout
-          </span>
+          <span className="logout">logout</span>
         </div>
       </nav>
     </div>

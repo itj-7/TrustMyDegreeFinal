@@ -1,4 +1,5 @@
 import "./App.css";
+import { Toaster } from "react-hot-toast";
 import Layout from "./component/home/Layout";
 import Home from "./component/home/Home";
 import Login from "./component/login/login";
@@ -14,6 +15,7 @@ import List from "./component/admin/list/List";
 import Static from "./component/admin/static/Static";
 import Parameters from "./component/admin/param/Param";
 import Request from "./component/admin/request/Request";
+import AuditTrail from "./component/admin/audit/AuditTrail";
 
 import DashboardStudent from "./component/student/DashboardStudent";
 import Settings from "./component/student/Settings";
@@ -22,6 +24,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="App">
+        <Toaster position="top-right" />
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
@@ -29,7 +32,6 @@ function App() {
           </Route>
 
           <Route path="/login" element={<Login />} />
-
           <Route path="/admin/*" element={<Admin />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
@@ -39,6 +41,7 @@ function App() {
             <Route path="stat" element={<Static />} />
             <Route path="req" element={<Request />} />
             <Route path="para" element={<Parameters />} />
+            <Route path="audit" element={<AuditTrail />} />
           </Route>
 
           <Route path="/student/*" element={<Student />} >
