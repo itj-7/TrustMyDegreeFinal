@@ -17,15 +17,10 @@ function Issue() {
   });
   const [fileKey, setFileKey] = useState(0);
 
-  // Get user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      parsed.role === "ADMIN"
-        ? setUser({ name: "Admin", email: parsed.email })
-        : setUser({ name: "Super Admin", email: parsed.email });
-    }
+    const parsed = storedUser ? JSON.parse(storedUser) : {};
+    setUser({ name: parsed.role === "ADMIN" ? "Admin" : "Super Admin", email: parsed.email || "", avatar: parsed.avatar || null });
   }, []);
 
   function handleChange(e) {
@@ -102,7 +97,7 @@ form.append(dateField, formData.date);
             <h4>{user ? user.name : "guest"}</h4>
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
-          <img src="/totalcertaficates.png" alt="avatar" />
+          <img src={user?.avatar ? `http://localhost:5000${user.avatar}` : "/totalcertaficates.png"} alt="avatar" />
         </div>
       </div>
 
