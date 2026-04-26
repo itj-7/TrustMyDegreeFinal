@@ -21,6 +21,7 @@ function DashboardStudent() {
         setUser({
           name: data.fullName,
           isGraduated: data.isGraduated,
+          avatar: data.avatar || null,
           totalCertificates: data.totalCertificates,
           activeCertificates: data.activeCertificates,
           lastIssued: data.lastIssuedCertificate?.issueDate || null,
@@ -296,7 +297,8 @@ function DashboardStudent() {
                     type="button"
                     onClick={() => downloadFile(cert.id, "CERT")}
                   >
-                    Download PDF
+                    {" "}
+                    Download PDF{" "}
                   </button>
                   <button
                     type="button"
@@ -407,7 +409,7 @@ function DashboardStudent() {
 
         <div className={styles.info}>
           <img
-            src="/totalcertaficates.png"
+            src={user?.avatar ? `http://localhost:5000${user.avatar}` : "/totalcertaficates.png"}
             alt="ava"
             className={styles.student}
           />
@@ -424,7 +426,6 @@ function DashboardStudent() {
         </div>
       </div>
 
-      {/* Badge Modal */}
       {badgeModal && (
         <div
           style={{
