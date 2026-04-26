@@ -79,6 +79,11 @@ function Navbar() {
             <img src="/param.png" alt="navstat" />
             <span className="same">Parameters</span>
           </Link>
+
+          <Link to="/admin/verif" onClick={() => setIsOpen(false)}>
+            <img src="" alt="verify" />
+            <span className="same">verify</span>
+          </Link>
         </div>
 
         <div className="out" onClick={handleLogout}>

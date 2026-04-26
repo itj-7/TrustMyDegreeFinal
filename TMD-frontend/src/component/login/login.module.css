@@ -133,8 +133,8 @@ body {
 }
 
 .send {
-  width: 65%;
-  height: 80%;
+  width: 75%;
+  height: 90%;
   padding: 40px;
   border-radius: 30px;
   background-color: #07122b;
@@ -238,7 +238,7 @@ body {
 }
 
 .inp {
-  width: 80%;
+  width: 85%;
   color: blue;
   border: 1px solid #193cb880;
   border-radius: 14px;

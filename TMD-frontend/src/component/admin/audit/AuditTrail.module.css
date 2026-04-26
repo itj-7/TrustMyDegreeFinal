@@ -105,6 +105,7 @@
 .statsBar {
   grid-area: stats;
   display: flex;
+  justify-content: space-evenly;
   gap: 16px;
   padding: 20px 40px;
   background-color: white;
@@ -228,7 +229,7 @@
   grid-area: table;
   display: grid;
   grid-template-rows: auto auto;
-  gap: 10px;
+  gap: 30px;
   animation: fadeInUp 0.6s ease;
 }
 
@@ -378,7 +379,7 @@ tbody td[colspan] {
 
 .arr {
   padding-right: 60px;
-  margin-top: 10px;
+  margin-bottom: 50px;
 }
 .pagination {
   display: flex;
