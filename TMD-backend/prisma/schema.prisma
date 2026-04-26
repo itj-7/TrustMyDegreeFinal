@@ -19,6 +19,7 @@ model User {
   year         String?
   isGraduated  Boolean       @default(false)
   avatar       String?
+  blockchainRegistered Boolean       @default(false)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   certificates Certificate[]
