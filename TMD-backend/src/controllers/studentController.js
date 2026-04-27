@@ -1,8 +1,7 @@
 const prisma = require("../config/prisma");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
-const path = require("path");
-const fs = require("fs");
+const { uploadAvatarToCloudinary } = require("../services/cloudinary.service");
 const { getCertificateData } = require("../services/blockchain.service");
 
 const dashboard = async (req, res) => {
@@ -36,7 +35,7 @@ const dashboard = async (req, res) => {
             id: cert.id,
             uniqueCode: cert.uniqueCode,
             ipfsHash: cert.ipfsHash,
-            ipfsUrl: `https://gateway.pinata.cloud/ipfs/${cert.ipfsHash}`,
+            ipfsUrl: cert.ipfsHash ? `https://ipfs.filebase.io/ipfs/${cert.ipfsHash}` : null,
             status: cert.status,
             issueDate: cert.issueDate,
             graduationDate,
@@ -69,7 +68,7 @@ const dashboard = async (req, res) => {
 
     const requests = rawRequests.map((req) => ({
       ...req,
-      fileUrl: req.ipfsHash ? `https://gateway.pinata.cloud/ipfs/${req.ipfsHash}` : req.fileUrl,
+      fileUrl: req.ipfsHash ? `https://ipfs.filebase.io/ipfs/${req.ipfsHash}` : req.fileUrl,
     }));
 
     res.status(200).json({
@@ -123,9 +122,10 @@ const downloadCertificate = async (req, res) => {
 
     if (!certificate) return res.status(404).json({ message: "Certificate not found" });
     if (certificate.studentId !== userId) return res.status(403).json({ message: "Access denied" });
-    if (!certificate.ipfsHash) return res.status(404).json({ message: "Certificate file not found" });
-
-    const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`;
+    if (!certificate.ipfsHash || certificate.ipfsHash === "pending") {
+      return res.status(404).json({ message: "Certificate is being prepared, please try again shortly" });
+    }
+    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${certificate.ipfsHash}`;
     const response = await axios.get(ipfsUrl, { responseType: "stream" });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -147,7 +147,7 @@ const downloadRequestDocument = async (req, res) => {
     if (request.studentId !== userId) return res.status(403).json({ message: "Access denied" });
     if (!request.ipfsHash) return res.status(404).json({ message: "Document not available yet" });
 
-    const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${request.ipfsHash}`;
+    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${request.ipfsHash}`;
     const response = await axios.get(ipfsUrl, { responseType: "stream" });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -199,31 +199,16 @@ const uploadAvatar = async (req, res) => {
 
     const file = req.files.avatar;
 
-    // only allow images
     const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!allowed.includes(file.mimetype)) {
       return res.status(400).json({ message: "Only JPEG, PNG, WebP, or GIF images are allowed" });
     }
 
-    // max 3MB
     if (file.size > 3 * 1024 * 1024) {
       return res.status(400).json({ message: "Image must be under 3MB" });
     }
 
-    const ext = path.extname(file.name) || ".jpg";
-    const fileName = `avatar_${userId}_${Date.now()}${ext}`;
-    const uploadPath = path.join(__dirname, "../uploads", fileName);
-
-    await file.mv(uploadPath);
-
-    // delete old avatar file if it exists and is local
-    const student = await prisma.user.findUnique({ where: { id: userId } });
-    if (student?.avatar && student.avatar.startsWith("/uploads/")) {
-      const oldPath = path.join(__dirname, "../", student.avatar);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-    }
-
-    const avatarUrl = `/uploads/${fileName}`;
+    const avatarUrl = await uploadAvatarToCloudinary(file.data, userId);
 
     await prisma.user.update({
       where: { id: userId },
