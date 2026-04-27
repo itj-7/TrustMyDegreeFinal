@@ -443,7 +443,7 @@ const importDiplomas = async (req, res) => {
           });
         }
 
-        // ✅ FIX: specialty — RANK uses form value, everything else uses Excel row
+        
         const resolvedSpecialty =
           contractType === "RANK"
             ? speciality || ""
@@ -475,6 +475,8 @@ const importDiplomas = async (req, res) => {
             field: row.field || "",
             average: row.average || "",
             rank: row.rank || "",
+              branch: branch || "",       
+              class: level || "",
           },
           templateType,
         );

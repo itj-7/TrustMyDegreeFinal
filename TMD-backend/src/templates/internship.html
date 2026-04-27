@@ -6,8 +6,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
 <style>
 :root {
   --green-dark:  #23449f;
@@ -107,7 +105,6 @@ body {
   margin: 6px auto 0;
 }
 
-/* Main content row: body text + QR side by side */
 .content-row {
   display: flex;
   align-items: flex-start;
@@ -125,12 +122,19 @@ body {
   line-height: 2.05;
 }
 
-/* QR + HASH BLOCK */
+/* ✅ FIX: updated verify-block to work with base64 img */
 .verify-block {
   flex-shrink: 0;
   text-align: center;
   width: 110px;
   padding-top: 4px;
+}
+
+.verify-block img {
+  width: 90px;
+  height: 90px;
+  display: block;
+  margin: 0 auto;
 }
 
 .hash {
@@ -140,7 +144,6 @@ body {
   margin-top: 4px;
 }
 
-/* SIGNATURES */
 .signatures {
   display: flex;
   justify-content: space-between;
@@ -195,8 +198,9 @@ body {
       <p>Fait à {{internshipCity}} le {{issueDate}}</p>
     </div>
 
+    <!-- ✅ FIX: replaced qrcodejs CDN with base64 QR from generatePDF.js -->
     <div class="verify-block">
-      <div id="qrcode"></div>
+      {{qrCode}}
       <div class="hash">{{hash}}</div>
       <div style="font-size:8px; margin-top:3px;">{{uniqueCode}}</div>
     </div>
@@ -218,17 +222,6 @@ body {
   </div>
 
 </div>
-
-<script>
-  const verificationURL =
-    "https://trustmydegree.io/verify/{{uniqueCode}}?hash={{hash}}";
-
-  new QRCode(document.getElementById("qrcode"), {
-    text: verificationURL,
-    width: 90,
-    height: 90
-  });
-</script>
 
 </body>
 </html>
