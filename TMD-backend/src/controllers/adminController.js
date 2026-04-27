@@ -547,7 +547,6 @@ const importDiplomas = async (req, res) => {
                 .includes("rattrapage") ? "RATTRAPAGE" : "NORMAL";
 
               // register student in RankRegistry first (contract requires studentExists)
-              if (!student.blockchainRegistered) {
                 try {
                   await addStudentToRankRegistry({
                     matricule: student.matricule,
@@ -567,13 +566,14 @@ const importDiplomas = async (req, res) => {
                     data: { blockchainRegistered: true },
                   });
                 } catch (err) {
-                  console.log(`Student ${student.matricule} already in RankRegistry:`, err.message);
+                  // student already exists on chain — still mark as registered
+                  console.log(`Student ${student.matricule} rank registry:`, err.message);
                   await prisma.user.update({
                     where: { id: student.id },
                     data: { blockchainRegistered: true },
                   });
                 }
-              }
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
               // issue rank document on RankRegistry
               blockchainResult = await issueRankDocument({
@@ -594,10 +594,13 @@ const importDiplomas = async (req, res) => {
           });
         }
 
-        const resolvedSpecialty =
-          contractType === "RANK"
-            ? speciality || ""
-            : row.speciality || "";
+        const specialityMap = {
+          "cp-mi": "Mathématiques et Informatique",
+          "cp-st": "Sciences et Technologies",
+        };
+
+        const specialityKey = `${speciality}-${branch}`.toLowerCase();
+        const resolvedSpecialty = specialityMap[specialityKey] || speciality || row.speciality || row.specialty || "";
 
         // save to Prisma
         await prisma.certificate.create({
