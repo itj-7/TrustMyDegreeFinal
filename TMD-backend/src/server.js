@@ -18,6 +18,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use(fileUpload());
 
 // routes
 app.use("/api/auth", require("./routes/auth"));
