@@ -9,13 +9,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Admin from "./component/login/Admin";
 import Student from "./component/login/Student";
 import Dashboard from "./component/admin/dashboard/dashboard";
-import Authorisations  from "./component/admin/authori/authorisation";
+import Authorisations from "./component/admin/authori/authorisation";
 import Issue from "./component/admin/add/issue";
 import List from "./component/admin/list/List";
 import Static from "./component/admin/static/Static";
 import Parameters from "./component/admin/param/Param";
 import Request from "./component/admin/request/Request";
 import AuditTrail from "./component/admin/audit/AuditTrail";
+import Verifie from "./component/admin/verify/Verifie";
 
 import DashboardStudent from "./component/student/DashboardStudent";
 import Settings from "./component/student/Settings";
@@ -42,17 +43,15 @@ function App() {
             <Route path="req" element={<Request />} />
             <Route path="para" element={<Parameters />} />
             <Route path="audit" element={<AuditTrail />} />
+            <Route path="verif" element={<Verifie />} />
           </Route>
 
-          <Route path="/student/*" element={<Student />} >
-           < Route index element={<DashboardStudent />}/>
-            <Route path="DashboardStudent" element={<DashboardStudent/>} />
-             <Route path="RequestStudent" element={<RequestStudent/>} />
-            < Route path="Settings" element={<Settings />}/>
-          
+          <Route path="/student/*" element={<Student />}>
+            <Route index element={<DashboardStudent />} />
+            <Route path="DashboardStudent" element={<DashboardStudent />} />
+            <Route path="RequestStudent" element={<RequestStudent />} />
+            <Route path="Settings" element={<Settings />} />
           </Route>
-
-
         </Routes>
       </div>
     </BrowserRouter>

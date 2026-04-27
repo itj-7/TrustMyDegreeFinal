@@ -39,9 +39,11 @@ const login = async (req, res) => {
         matricule: user.matricule,
         email: user.email,
         role: user.role,
+        avatar: user.avatar,
       },
     });
   } catch (error) {
+    console.error("Login error:", error); 
     res.status(500).json({ message: "Something went wrong", error });
   }
 };
@@ -114,16 +116,18 @@ const getUser = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { id: true, fullName: true, email: true, role: true },
+      select: { id: true, fullName: true, email: true, role: true, avatar: true },
     });
     res.json({
       name: user.fullName,
       email: user.email,
       role: user.role,
       id: user.id,
+      avatar: user.avatar,
     });
   } catch (err) {
     res.status(500).json({ message: "something went wrong" });
   }
 };
+
 module.exports = { login, changePassword, seedSuperAdmin, getUser };
