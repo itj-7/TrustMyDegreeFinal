@@ -217,6 +217,7 @@
 
 .reset {
   width: 120px;
+  padding: 10px;
   margin-left: 59px;
   border: 1px solid #155dfc;
   border-radius: 12px;
@@ -251,7 +252,7 @@
   table-layout: fixed;
 }
 .colu:nth-child(1) {
-  width: 40px;
+  width: 50px;
 } /* checkbox */
 .colu:nth-child(2) {
   width: 90px;
@@ -275,7 +276,7 @@
   width: 90px;
 } /* Status */
 .colu:nth-child(9) {
-  width: 50px;
+  width: 80px;
 } /* Actions */
 
 th:hover {
@@ -414,6 +415,7 @@ tbody tr:hover .column > .type {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   animation: fadeInDown 0.2s ease;
   overflow: hidden;
+  position: absolute;
 }
 
 .menu button {
@@ -544,7 +546,7 @@ tbody td[colspan] {
 }
 
 .toastConfirmBtn {
-  background: #4F46E5;
+  background: #4f46e5;
   color: white;
   border: none;
   border-radius: 6px;

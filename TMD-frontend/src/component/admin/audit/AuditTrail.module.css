@@ -236,15 +236,73 @@
 .countainer {
   display: flex;
   justify-content: center;
-  overflow-x: auto;
+  width: 100%;
 }
 
 .table {
   border-collapse: collapse;
-  width: 90%;
+  width: 95%;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  table-layout: fixed;
+}
+
+.table {
+  width: 95%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th:nth-of-type(1),
+.table td:nth-of-type(1) {
+  width: 80px;
+}
+
+.table th:nth-of-type(2),
+.table td:nth-of-type(2) {
+  width: 140px;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.table th:nth-of-type(3),
+.table td:nth-of-type(3) {
+  width: 80px;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.table th:nth-of-type(4),
+.table td:nth-of-type(4) {
+  width: 90px;
+}
+
+.table th:nth-of-type(5),
+.table td:nth-of-type(5) {
+  width: 110px;
+}
+
+.table th:nth-of-type(6),
+.table td:nth-of-type(6) {
+  width: 100px;
+}
+
+.table th:nth-of-type(7),
+.table td:nth-of-type(7) {
+  width: 110px;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.table th:nth-of-type(8),
+.table td:nth-of-type(8) {
+  width: 90px;
+}
+
+.table th:nth-of-type(9),
+.table td:nth-of-type(9) {
+  width: 90px;
 }
 
 .row,
@@ -329,12 +387,13 @@ tbody tr:hover .column {
 
 .hash {
   font-family: monospace;
-  font-size: 12px;
+  font-size: 10px;
   color: #6366f1;
-  cursor: help;
   background-color: #f5f3ff;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 6px;
+  display: inline-block;
+  max-width: 100px;
 }
 
 .ipfsLink {

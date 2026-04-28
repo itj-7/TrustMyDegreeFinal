@@ -1,18 +1,22 @@
 .main-content {
-  min-height: 100vh;
+  min-height: 100%;
   background: #f5f7fb;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "login" "main";
 }
-
 
 /*top profile*/
 
 .login {
+  grid-area: login;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   background-color: #ffffff;
   padding: 10px;
-  height: 50px;
+  height: 60px;
 }
 
 .login > h4 {
@@ -22,7 +26,7 @@
 }
 
 .info {
-   display: flex;
+  display: flex;
   flex-direction: row;
   position: relative;
   right: 20px;
@@ -42,7 +46,7 @@
 }
 
 .subinfo h4 {
-font-size: 12px;
+  font-size: 12px;
   margin: 2px;
 }
 .subinfo p {
@@ -59,16 +63,16 @@ font-size: 12px;
   margin-top: 0px;
 }
 
-
 .info img:hover {
   transform: scale(1.1);
 }
 /*render content*/
 
 .render-content {
+  grid-area: main;
   display: grid;
   grid-template-columns: 2fr 1fr;
-  grid-template-rows: 350px 350px; /* equal rows */
+  grid-template-rows: 400px 350px; /* equal rows */
   column-gap: 50px;
   row-gap: 40px;
   padding: 20px;
@@ -114,6 +118,8 @@ font-size: 12px;
   align-items: start;
 }
 
+/*pie chart*/
+
 .doughnutWrapper {
   width: 180px;
   height: 180px;
@@ -127,15 +133,17 @@ font-size: 12px;
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  padding: 20px;
 }
 
 .legend {
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr; /* 2 columns */
-  row-gap: 8px;
+  row-gap: 5px;
   column-gap: 10px;
   padding: 0 10px;
+  margin-top: 10px;
 }
 
 .legendItem {
@@ -154,22 +162,17 @@ font-size: 12px;
   display: inline-block;
 }
 
+/*bar chart*/
+
 .bar {
   grid-area: bar;
-  width: 50%;
+  width: 80%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: start;
 }
-
-.square {
-  grid-area: square;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: start;
-}
+/*titles*/
 
 .chartTitle {
   display: flex;
@@ -187,12 +190,28 @@ font-size: 12px;
 }
 
 /*heatmap*/
+
+.square {
+  grid-area: square;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  align-items: start;
+}
+
 .heatHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+
   width: 100%;
-  margin-bottom: 16px;
+  padding-bottom: 10px;
+
+  background: white;
 }
 
 .heatIcon {

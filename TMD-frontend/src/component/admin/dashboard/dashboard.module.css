@@ -86,7 +86,7 @@
   justify-content: space-between;
   background-color: #ffffff;
   padding: 10px;
-  height: 60%;
+  height: 70%;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   animation: fadeInDown 0.4s ease;
 }
@@ -154,19 +154,20 @@
 .verifications {
   background-color: #ffffff;
   border-radius: 25px;
-  padding: 15px;
   display: flex;
   flex-direction: column;
-  align-items: start;
+  justify-content: space-between; /* 🔥 key fix */
+  align-items: flex-start;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
   border: 2px solid #f3f4f6;
   width: 140px;
-  height: 155px;
+  height: 160px;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease,
     border-color 0.3s ease;
   animation: fadeInUp 0.7s ease;
+  padding: 18px;
 }
 
 .total-certificates:hover,
@@ -184,10 +185,8 @@
 .verifications > img {
   width: 40px;
   height: 40px;
-  position: relative;
-  left: 10px;
-  top: 7px;
   transition: transform 0.3s ease;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
 .total-certificates:hover > img,
@@ -204,9 +203,8 @@
   color: #6a7282;
   font-size: 12px;
   text-align: start;
-  position: relative;
-  top: 10px;
-  margin: 0;
+
+  margin-bottom: 0px;
 }
 
 /* number pushed further down */
@@ -214,14 +212,28 @@
 .active-certificates > h2,
 .revoked-certificates > h2,
 .verifications > h2 {
-  color: #155dfc;
-  font-size: 24px;
-  font-weight: 700;
-  position: relative;
-  top: 25px;
-  left: 10px;
-  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e3a8a;
+  letter-spacing: 1px;
+  margin-top: auto;
   animation: countUp 0.5s ease;
+}
+
+.total-certificates {
+  border-top: 4px solid #3b82f6;
+}
+
+.active-certificates {
+  border-top: 4px solid #22c55e;
+}
+
+.revoked-certificates {
+  border-top: 4px solid #ef4444;
+}
+
+.verifications {
+  border-top: 4px solid #f59e0b;
 }
 
 /* recent activity */
@@ -245,7 +257,7 @@
 
 .card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 4px blue;
   border-color: #155dfc;
 }
 
@@ -332,14 +344,19 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin-bottom: 5px;
+
   border-top: 1px solid #f3f4f6;
   transition: background-color 0.2s ease;
   animation: fadeIn 0.4s ease;
+
+  border-radius: 10px;
+  margin: 6px;
+  padding: 6px;
 }
 
 .activity-item:hover {
-  background-color: #f0f7ff;
+  background: #eef4ff;
+  transform: scale(1.01);
 }
 
 .leftside {
@@ -453,8 +470,7 @@
 .actions {
   width: 100%;
   max-width: 320px;
-  padding: 20px;
-  border-radius: 40px;
+
   background: linear-gradient(135deg, #0f1e3f, #1a3a7c);
   display: flex;
   align-items: center;
@@ -463,11 +479,17 @@
     transform 0.3s ease,
     box-shadow 0.3s ease;
   cursor: pointer;
+
+  border-radius: 25px;
+  padding: 20px;
+  box-shadow:
+    0 10px 25px rgba(37, 99, 235, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .actions:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(15, 30, 63, 0.35);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.35);
 }
 
 .add {
@@ -610,7 +632,7 @@
 }
 
 .scolarite {
-  background-color: #8B5CF6;
+  background-color: #8b5cf6;
   color: white;
   border-radius: 20px;
   padding: 3px 10px;
