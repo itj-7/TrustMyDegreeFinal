@@ -19,8 +19,17 @@ function Settings() {
     api
       .get("/student/dashboard")
       .then((res) => {
-        setUser({ name: res.data.fullName, isGraduated: res.data.isGraduated, avatar: res.data.avatar });
-        if (res.data.avatar) setAvatarPreview(`${process.env.REACT_APP_API_URL}${res.data.avatar}`);
+        setUser({
+          name: res.data.fullName,
+          isGraduated: res.data.isGraduated,
+          avatar: res.data.avatar,
+        });
+        if (res.data.avatar) {
+          const url = res.data.avatar.startsWith("http")
+            ? res.data.avatar
+            : `${process.env.REACT_APP_API_URL}${res.data.avatar}`;
+          setAvatarPreview(url);
+        }
       })
       .catch((err) => console.log(err));
   }, []);
@@ -41,11 +50,14 @@ function Settings() {
     const formData = new FormData();
     formData.append("avatar", avatarFile);
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/student/avatar`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        body: formData,
-      });
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/student/avatar`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          body: formData,
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Upload failed");
       toast.success("Profile picture updated!");
@@ -175,7 +187,7 @@ function Settings() {
         <div className={styles.settings}>
           <div className={styles.top}>
             <h3>Profile Settings</h3>
-            <p>Manage your  account details and security.</p>
+            <p>Manage your account details and security.</p>
           </div>
 
           <div className={styles.container}>
@@ -244,7 +256,9 @@ function Settings() {
                   alt="profile preview"
                   className={styles.avatarPreview}
                 />
-                {avatarFile && <span className={styles.avatarNewBadge}>New</span>}
+                {avatarFile && (
+                  <span className={styles.avatarNewBadge}>New</span>
+                )}
               </div>
 
               <div className={styles.avatarControls}>
@@ -258,7 +272,9 @@ function Settings() {
                   onChange={handleAvatarChange}
                   className={styles.avatarInput}
                 />
-                <p className={styles.avatarHint}>JPEG, PNG, WebP or GIF · max 3MB</p>
+                <p className={styles.avatarHint}>
+                  JPEG, PNG, WebP or GIF · max 3MB
+                </p>
                 {avatarFile && (
                   <button
                     type="button"
@@ -271,7 +287,6 @@ function Settings() {
                 )}
               </div>
             </div>
-
           </div>
         </div>
       </form>

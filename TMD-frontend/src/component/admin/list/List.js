@@ -31,6 +31,16 @@ function List() {
       .catch((err) => console.log(err));
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (!e.target.closest(`.${styles.actions}`)) {
+        setOpenMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   /*each column be sorted*/
   function handleSort(key) {
     let direction = "asc";
@@ -308,7 +318,7 @@ function unrevokeCert(id) {
             <h4>{user ? user.name : "guest"}</h4>
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
-          <img src={user?.avatar ? `${process.env.REACT_APP_API_URL}${user.avatar}` : "/totalcertaficates.png"} alt="avatar" />
+          <img src={user?.avatar ? user.avatar : "/totalcertaficates.png"} alt="avatar" />
         </div>
       </div>
 
@@ -461,7 +471,9 @@ function unrevokeCert(id) {
                     </td>
                     <td className={styles.column}>
                       <img
-                        src={cert.student?.avatar ? `${process.env.REACT_APP_API_URL}${cert.student.avatar}` : "/students.jpg"}
+                        src={cert.student?.avatar 
+                          ? (cert.student.avatar.startsWith("http") ? cert.student.avatar : `${process.env.REACT_APP_API_URL}${cert.student.avatar}`) 
+                          : "/students.jpg"}
                         alt="student"
                       />
                       <span className={styles.student}>
@@ -470,7 +482,7 @@ function unrevokeCert(id) {
                     </td>
                     <td className={styles.column}>{cert.student?.matricule}</td>
                     <td className={styles.column}>
-                      <span className={styles.type}>{cert.type}</span>
+                      <span className={styles.type}>{cert.type === "STAGE" ? "INTERNSHIP" : cert.type}</span>
                     </td>
                     <td className={styles.column}>
                       <span className={styles.specialty}>{cert.specialty}</span>

@@ -77,11 +77,7 @@ function Dashboard() {
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
           <img
-            src={
-              user?.avatar
-                ? `${process.env.REACT_APP_API_URL}${user.avatar}`
-                : "/totalcertaficates.png"
-            }
+            src={user?.avatar ? user.avatar : "/totalcertaficates.png"}
             alt="ava"
           />
         </div>
@@ -128,7 +124,9 @@ function Dashboard() {
                     <img
                       src={
                         act.student?.avatar
-                          ? `${process.env.REACT_APP_API_URL}${act.student.avatar}`
+                          ? act.student.avatar.startsWith("http")
+                            ? act.student.avatar
+                            : `${process.env.REACT_APP_API_URL}${act.student.avatar}`
                           : "/stdicon.jpg"
                       }
                       alt="stdicon"
@@ -149,7 +147,8 @@ function Dashboard() {
                     <span
                       className={`${styles.status} ${
                         act.type === "INTERNSHIP" ||
-                        act.contractType === "INTERNSHIP"
+                          act.contractType === "INTERNSHIP" ||
+                          act.type === "STAGE"
                           ? styles.internship
                           : act.type === "MASTER"
                             ? styles.master
@@ -163,7 +162,7 @@ function Dashboard() {
                                   : ""
                       }`}
                     >
-                      {act.contractType === "RANK" ? "RANK" : act.type}
+                      {act.contractType === "RANK" ? "RANK" : act.type === "STAGE" ? "INTERNSHIP" : act.type}
                     </span>
                   </div>
                 </div>

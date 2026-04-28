@@ -3,13 +3,14 @@ const bcrypt = require("bcrypt");
 const sendEmail = require("../utils/sendEmail");
 const XLSX = require("xlsx");
 const axios = require("axios");
-const generateDiplomaPDF = require("../utils/generatePDF");
+const { uploadAvatarToCloudinary } = require("../services/cloudinary.service");
 const universityDB = require("../config/universityDB");
 const { uploadPDFtoPinata } = require("../services/pinata.service");
 const {
   issueDiploma,
   issueInternship,
   issueStudyCertificate,
+  getCertificateData,
   issueDocument,
   issueRankDocument,
   addStudentToRankRegistry,
@@ -520,20 +521,36 @@ const importDiplomas = async (req, res) => {
             ipfsHash: "pending",
           });
         } else if (contractType === "INTERNSHIP") {
+          // Try multiple column names for internship role
+          const internshipRole = row.speciality || row.specialty || row.role || row.position || row.internshipRole || row["Internship Role"] || row["Role"];
+          if (!internshipRole || internshipRole.trim() === "") {
+            console.error(`Internship data for ${row.matricule}:`, JSON.stringify(row));
+            throw new Error(`Internship role/specialty is required. Available columns: ${Object.keys(row).join(", ")}`);
+          }
+
           const start = row.startDate ? new Date(row.startDate) : null;
           let end = row.endDate ? new Date(row.endDate) : null;
 
-          if (end <= start) end.setDate(end.getDate() + 1);
+          if (!start || !end) {
+            throw new Error("Start date and end date are required for internships");
+          }
+
+          if (new Date(end) <= new Date(start)) {
+            throw new Error("End date must be after start date");
+          }
+
+          const endDate = new Date(end);
+          endDate.setDate(endDate.getDate() + 1);
 
           blockchainResult = await issueInternship({
             studentId: student.matricule,
             studentName: student.fullName,
-            companyName: row.company || "ENSTA",
-            internshipRole: row.speciality || "",
-            internshipCity: row.internshipCity || "",
+            companyName: row.company || row.Company || "ENSTA",
+            internshipRole: internshipRole.trim(),
+            internshipCity: row.internshipCity || row.city || row.City || "",
             ipfsHash: "pending",
             startDate: start.toISOString(),
-            endDate: end.toISOString(),
+            endDate: endDate.toISOString(),
           });
           }  else if (contractType === "RANK") {
               const rankValue = Number(row["rank"] || 0);
@@ -546,7 +563,6 @@ const importDiplomas = async (req, res) => {
                 .includes("rattrapage") ? "RATTRAPAGE" : "NORMAL";
 
               // register student in RankRegistry first (contract requires studentExists)
-              if (!student.blockchainRegistered) {
                 try {
                   await addStudentToRankRegistry({
                     matricule: student.matricule,
@@ -566,13 +582,14 @@ const importDiplomas = async (req, res) => {
                     data: { blockchainRegistered: true },
                   });
                 } catch (err) {
-                  console.log(`Student ${student.matricule} already in RankRegistry:`, err.message);
+                  // student already exists on chain — still mark as registered
+                  console.log(`Student ${student.matricule} rank registry:`, err.message);
                   await prisma.user.update({
                     where: { id: student.id },
                     data: { blockchainRegistered: true },
                   });
                 }
-              }
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
               // issue rank document on RankRegistry
               blockchainResult = await issueRankDocument({
@@ -593,52 +610,48 @@ const importDiplomas = async (req, res) => {
           });
         }
 
-        const resolvedSpecialty =
-          contractType === "RANK"
-            ? speciality || ""
-            : row.speciality || "";
+        const specialityMap = {
+          "cp-mi": "Mathématiques et Informatique",
+          "cp-st": "Sciences et Technologies",
+        };
 
-        // generate PDF using correct template
-        const pdfPath = await generateDiplomaPDF(
-          {
-            fullName: student.fullName,
-            matricule: student.matricule,
-            specialty: resolvedSpecialty,
-            faculty: row.faculty || "",
-            sectionNum: String(row.sectionNum || ""),
-            facultyNum: String(row.facultyNum || ""),
-            mention: row.mention || "",
-            graduationDate,
-            issueDate: new Date().toISOString().split("T")[0],
-            uniqueCode,
-            academicYear: row.academicYear || "",
-            year: row.year || "",
-            company: row.company || "",
-            duration: row.duration || "",
-            startDate: row.startDate || "",
-            birthDate: student.dateOfBirth || "",
-            birthPlace: student.placeOfBirth || "",
-            endDate: row.endDate || "",
-            internshipCity: row.internshipCity || "",
-            level: row.level || "",
-            field: row.field || "",
-            average: row.average || "",
-            rank: row.rank || "",
-              branch: branch || "",       
-              class: level || "",
-          },
-          templateType,
-        );
-
-        // upload PDF to IPFS, get back the CID
-        const ipfsHash = await uploadPDFtoPinata(pdfPath);
+        const specialityKey = `${speciality}-${branch}`.toLowerCase();
+        const resolvedSpecialty = specialityMap[specialityKey] || speciality || row.speciality || row.specialty || "";
 
         // save to Prisma
         await prisma.certificate.create({
           data: {
             studentId: student.id,
             uniqueCode,
-            ipfsHash,
+            ipfsHash: null,    
+            certData: {             
+              fullName: student.fullName,
+              matricule: student.matricule,
+              specialty: resolvedSpecialty,
+              faculty: row.faculty || "",
+              sectionNum: String(row.sectionNum || ""),
+              facultyNum: String(row.facultyNum || ""),
+              mention: row.mention || "",
+              graduationDate,
+              issueDate: new Date().toISOString().split("T")[0],
+              uniqueCode,
+              academicYear: row.academicYear || "",
+              year: row.year || "",
+              company: row.company || "",
+              duration: row.duration || "",
+              startDate: row.startDate || "",
+              birthDate: student.dateOfBirth || "",
+              birthPlace: student.placeOfBirth || "",
+              endDate: row.endDate || "",
+              internshipCity: row.internshipCity || "",
+              level: row.level || "",
+              field: row.field || "",
+              average: row.average || "",
+              rank: row.rank || "",
+              branch: branch || "",
+              class: level || "",
+              templateType,
+            },
             blockchainCertId: blockchainResult.blockchainCertId,
             contractType,
             type: row.type || templateType,
@@ -765,25 +778,135 @@ const getStatistics = async (req, res) => {
 const downloadCertificate = async (req, res) => {
   try {
     const id = req.params.id;
-    const certificate = await prisma.certificate.findUnique({ where: { id } });
+    const certificate = await prisma.certificate.findUnique({
+      where: { id },
+      include: { student: true },
+    });
 
-    if (!certificate)
-      return res.status(404).json({ message: "Certificate not found" });
-    if (!certificate.ipfsHash)
-      return res.status(404).json({ message: "Certificate file not found" });
+    if (!certificate) return res.status(404).json({ message: "Certificate not found" });
 
-    const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${certificate.ipfsHash}`;
+    // --- Early return: if PDF already uploaded, stream directly from Filebase ---
+    if (certificate.ipfsHash && certificate.ipfsHash !== "pending") {
+      const ipfsUrl = `https://ipfs.filebase.io/ipfs/${certificate.ipfsHash}`;
+      const response = await axios.get(ipfsUrl, { responseType: "stream" });
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="certificate_${id}.pdf"`);
+      return response.data.pipe(res);
+    }
+
+    // --- Step 1: Fetch the source-of-truth data from the blockchain ---
+    console.log("[downloadCertificate] Fetching blockchain data for cert:", id);
+    const chainData = await getCertificateData(certificate.contractType, certificate.blockchainCertId);
+    console.log("[downloadCertificate] Blockchain data received:", JSON.stringify(chainData));
+
+    // --- Step 2: Build the PDF data object from blockchain (immutable) ---
+    // Fields the blockchain stores — these are authoritative and tamper-proof.
+    // Fields the blockchain does NOT store (birthDate, birthPlace, faculty numbers etc.)
+    // are pulled from certData as cosmetic/layout info only.
+    const prismaFallback = certificate.certData || {};
+    const templateType = prismaFallback.templateType || certificate.contractType.toLowerCase();
+
+    let pdfData = {
+      // Always from Prisma (non-academic, layout/identity fields)
+      uniqueCode:   prismaFallback.uniqueCode   || certificate.uniqueCode,
+      birthDate:    prismaFallback.birthDate     || certificate.student?.dateOfBirth || "",
+      birthPlace:   prismaFallback.birthPlace    || certificate.student?.placeOfBirth || "",
+      faculty:      prismaFallback.faculty       || "",
+      sectionNum:   prismaFallback.sectionNum    || "",
+      facultyNum:   prismaFallback.facultyNum    || "",
+      templateType,
+    };
+
+    if (certificate.contractType === "DIPLOMA") {
+      // Blockchain fields: studentName, degreeName, fieldOfStudy, issueDate, (graduationDate via issueDate)
+      const issueDateMs = Number(chainData.issueDate) * 1000;
+      const issueDateStr = new Date(issueDateMs).toLocaleDateString("fr-FR");
+      pdfData = {
+        ...pdfData,
+        fullName:       chainData.studentName,
+        specialty:      chainData.fieldOfStudy,
+        mention:        prismaFallback.mention || "",
+        graduationDate: issueDateStr,
+        issueDate:      issueDateStr,
+      };
+
+    } else if (certificate.contractType === "INTERNSHIP") {
+      // Blockchain fields: studentName, companyName, internshipRole, internshipCity, startDate, endDate, issueDate
+      const fmt = (ts) => new Date(Number(ts) * 1000).toLocaleDateString("fr-FR");
+      pdfData = {
+        ...pdfData,
+        fullName:      chainData.studentName,
+        specialty:     chainData.internshipRole,
+        company:       chainData.companyName,
+        internshipCity: chainData.internshipCity || "",
+        startDate:     fmt(chainData.startDate),
+        endDate:       fmt(chainData.endDate),
+        issueDate:     fmt(chainData.issueDate),
+        field:         prismaFallback.field || chainData.internshipRole || "",
+        duration:      prismaFallback.duration || "",
+      };
+
+    } else if (certificate.contractType === "STUDY") {
+      // Blockchain fields: studentName, programName, academicYear, certificateType, issueDate
+      pdfData = {
+        ...pdfData,
+        fullName:     chainData.studentName,
+        matricule:    certificate.student?.matricule || prismaFallback.matricule || "",
+        specialty:    chainData.programName,
+        academicYear: chainData.academicYear,
+        level:        chainData.certificateType || prismaFallback.level || "",
+        issueDate:    new Date(Number(chainData.issueDate) * 1000).toLocaleDateString("fr-FR"),
+      };
+
+    } else if (certificate.contractType === "RANK") {
+      // Blockchain fields: studentName(via matricule), rank, average, speciality, branch, year, session, issueDate
+      const issueDateStr = new Date(Number(chainData.issueDate) * 1000).toLocaleDateString("fr-FR");
+      pdfData = {
+        ...pdfData,
+        fullName:     certificate.student?.fullName || prismaFallback.fullName || "",
+        matricule:    certificate.student?.matricule || chainData.matricule || "",
+        specialty:    chainData.speciality || "",
+        average:      chainData.average || "",
+        rank:         chainData.rank || "",
+        branch:       chainData.branch || "",
+        class:        chainData.year || prismaFallback.class || "",
+        academicYear: prismaFallback.academicYear || "",
+        issueDate:    issueDateStr,
+      };
+    }
+
+    // --- Step 3: Generate the PDF from blockchain-sourced data ---
+    console.log("[downloadCertificate] Generating PDF from blockchain data...");
+    const generateDiplomaPDF = require("../utils/generatePDF");
+    const pdfPath = await generateDiplomaPDF(pdfData, templateType);
+    console.log("[downloadCertificate] PDF generated at:", pdfPath);
+
+    if (!fs.existsSync(pdfPath)) {
+      return res.status(500).json({ error: "PDF generation failed — file not found on disk" });
+    }
+
+    // --- Step 4: Upload to Filebase and save CID ---
+    console.log("[downloadCertificate] Uploading to Filebase...");
+    const ipfsHash = await uploadPDFtoPinata(pdfPath);
+    console.log("[downloadCertificate] Filebase CID:", ipfsHash);
+    fs.unlinkSync(pdfPath);
+
+    await prisma.certificate.update({ where: { id }, data: { ipfsHash } });
+
+    // Give Filebase a moment to propagate before fetching back
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // --- Step 5: Stream to client ---
+    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${ipfsHash}`;
     const response = await axios.get(ipfsUrl, { responseType: "stream" });
-
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename="certificate_${id}.pdf"`,
-    );
+    res.setHeader("Content-Disposition", `inline; filename="certificate_${id}.pdf"`);
     response.data.pipe(res);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "an error occurred in the server" });
+    console.error("[downloadCertificate] ERROR:", err.message);
+    console.error(err.stack);
+    res.status(500).json({ error: "An error occurred on the server", detail: err.message });
   }
 };
 
@@ -837,7 +960,7 @@ const downloadRequestFile = async (req, res) => {
     if (!request.ipfsHash)
       return res.status(404).json({ message: "File not available" });
 
-    const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${request.ipfsHash}`;
+    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${request.ipfsHash}`;
     const response = await axios.get(ipfsUrl, { responseType: "stream" });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -848,6 +971,47 @@ const downloadRequestFile = async (req, res) => {
     response.data.pipe(res);
   } catch (err) {
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+const exportRequests = async (req, res) => {
+  try {
+    const requests = await prisma.request.findMany({
+      include: { student: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const rows = requests.map((req) => ({
+      "Request ID": req.id.substring(0, 8) + "...",
+      "Student Name": req.student?.fullName || "",
+      Matricule: req.student?.matricule || "",
+      "Document Type": req.documentType || "",
+      Reason: req.reason || "",
+      Priority: req.priority || "",
+      "Submitted Date": new Date(req.createdAt).toLocaleDateString("fr-FR"),
+      Status: req.status || "PENDING",
+      "IPFS Hash": req.ipfsHash || "",
+      "Blockchain Doc ID": req.blockchainDocId || "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Requests");
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=requests.xlsx",
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.send(buffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "an error occurred in the server" });
   }
 };
 
@@ -870,7 +1034,7 @@ const getAuditTrail = async (req, res) => {
       blockchainCertId: cert.blockchainCertId || "",
       ipfsHash: cert.ipfsHash || "",
       ipfsUrl: cert.ipfsHash
-        ? `https://gateway.pinata.cloud/ipfs/${cert.ipfsHash}`
+        ? `https://ipfs.filebase.io/ipfs/${cert.ipfsHash}`
         : null,
       status: cert.status,
       issueDate: cert.issueDate,
@@ -901,19 +1065,7 @@ const uploadAvatar = async (req, res) => {
       return res.status(400).json({ message: "Image must be under 3MB" });
     }
 
-    const ext = path.extname(file.name) || ".jpg";
-    const fileName = `avatar_${userId}_${Date.now()}${ext}`;
-    const uploadPath = path.join(__dirname, "../uploads", fileName);
-
-    await file.mv(uploadPath);
-
-    const admin = await prisma.user.findUnique({ where: { id: userId } });
-    if (admin?.avatar && admin.avatar.startsWith("/uploads/")) {
-      const oldPath = path.join(__dirname, "../", admin.avatar);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-    }
-
-    const avatarUrl = `/uploads/${fileName}`;
+    const avatarUrl = await uploadAvatarToCloudinary(file.data, userId);
 
     await prisma.user.update({
       where: { id: userId },
@@ -942,6 +1094,7 @@ module.exports = {
   getAllCertificates,
   downloadCertificate,
   exportCertificates,
+  exportRequests,
   downloadRequestFile,
   getAuditTrail,
   uploadAvatar,

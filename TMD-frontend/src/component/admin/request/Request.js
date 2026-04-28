@@ -39,6 +39,15 @@ function Request() {
     }
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (!e.target.closest(`.${styles.actions}`)) {
+        setOpenMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Centralized fetch to keep stats and list in sync
   const fetchRequests = () => {
@@ -251,7 +260,7 @@ function Request() {
             <h4>{user ? user.name : "Guest"}</h4>
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
-          <img src={user?.avatar ? `${process.env.REACT_APP_API_URL}${user.avatar}` : "/totalcertaficates.png"} alt="ava" />
+          <img src={user?.avatar ? user.avatar : "/totalcertaficates.png"} alt="ava" />
         </div>
       </div>
 

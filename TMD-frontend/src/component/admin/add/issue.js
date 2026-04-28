@@ -20,7 +20,11 @@ function Issue() {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const parsed = storedUser ? JSON.parse(storedUser) : {};
-    setUser({ name: parsed.role === "ADMIN" ? "Admin" : "Super Admin", email: parsed.email || "", avatar: parsed.avatar || null });
+    setUser({
+      name: parsed.role === "ADMIN" ? "Admin" : "Super Admin",
+      email: parsed.email || "",
+      avatar: parsed.avatar || null,
+    });
   }, []);
 
   function handleChange(e) {
@@ -62,12 +66,11 @@ function Issue() {
       return;
     }
 
-    const form = new FormData();const dateField =
-  formData.templateType === "diploma"
-    ? "graduationDate"
-    : "issueDate";
+    const form = new FormData();
+    const dateField =
+      formData.templateType === "diploma" ? "graduationDate" : "issueDate";
 
-form.append(dateField, formData.date);
+    form.append(dateField, formData.date);
     form.append("excel", formData.file);
     form.append("templateType", formData.templateType);
     form.append("class", formData.class);
@@ -97,7 +100,10 @@ form.append(dateField, formData.date);
             <h4>{user ? user.name : "guest"}</h4>
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
-          <img src={user?.avatar ? `${process.env.REACT_APP_API_URL}${user.avatar}` : "/totalcertaficates.png"} alt="avatar" />
+          <img
+            src={user?.avatar ? user.avatar : "/totalcertaficates.png"}
+            alt="avatar"
+          />
         </div>
       </div>
 
@@ -214,9 +220,9 @@ form.append(dateField, formData.date);
               <div className={styles.date}>
                 <label>
                   {formData.templateType === "diploma"
-                     ? "Graduation Date"
-                      : "Issue Date"}
-                          </label>
+                    ? "Graduation Date"
+                    : "Issue Date"}
+                </label>
                 <input
                   type="date"
                   name="date"
@@ -321,6 +327,33 @@ form.append(dateField, formData.date);
             <div className={styles.sndrow}>
               <div
                 className={`${styles.upload} ${formData.file ? styles.uploadReady : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const droppedFile = e.dataTransfer.files[0];
+                  if (droppedFile) {
+                    const validTypes = [
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                      "application/vnd.ms-excel",
+                    ];
+                    if (
+                      !validTypes.includes(droppedFile.type) &&
+                      !droppedFile.name.endsWith(".xlsx")
+                    ) {
+                      toast.error("Please drop a valid .xlsx Excel file");
+                      return;
+                    }
+                    setFormData({ ...formData, file: droppedFile });
+                  }
+                }}
               >
                 <div className={styles.uploadIcon}>
                   {formData.file ? "✅" : ""}
@@ -345,6 +378,7 @@ form.append(dateField, formData.date);
                   type="file"
                   name="file"
                   key={fileKey}
+                  accept=".xlsx"
                   onChange={handleChange}
                 />
               </div>

@@ -1,5 +1,6 @@
 import styles from "./authorisation.module.css";
 import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 function Authorisations() {
   const [user, setUser] = useState(null);
@@ -71,21 +72,36 @@ function Authorisations() {
 
   // Delete admin
   function deleteAdmin(id) {
-    if (!window.confirm("Are you sure you want to delete this admin?")) return;
-
-    fetch(`${BASE_URL}/api/superadmin/admins/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((resp) => resp.json())
-      .then((data) => {
-        console.log(data);
-        setAdmins((prev) => prev.filter((admin) => admin.id !== id));
-        setMessage("Admin deleted successfully!");
-      })
-      .catch((err) => window.alert(err));
+    toast(
+      (t) => (
+        <div className={styles.toastConfirm}>
+          <span>Are you sure you want to delete this admin?</span>
+          <div className={styles.toastButtons}>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                fetch(`${BASE_URL}/api/superadmin/admins/${id}`, {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                })
+                  .then((resp) => resp.json())
+                  .then(() => {
+                    setAdmins((prev) =>
+                      prev.filter((admin) => admin.id !== id),
+                    );
+                    toast.success("Admin deleted successfully!");
+                  })
+                  .catch((err) => toast.error("Failed to delete admin"));
+              }}
+            >
+              Confirm
+            </button>
+            <button onClick={() => toast.dismiss(t.id)}>Cancel</button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity },
+    );
   }
 
   return (
@@ -99,7 +115,10 @@ function Authorisations() {
             <h4>{user ? user.fullName : "guest"}</h4>
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
-          <img src={user?.avatar ? `${process.env.REACT_APP_API_URL}${user.avatar}` : "/totalcertaficates.png"} alt="avatar" />
+          <img
+            src={user?.avatar ? user.avatar : "/totalcertaficates.png"}
+            alt="avatar"
+          />
         </div>
       </div>
 
@@ -126,9 +145,9 @@ function Authorisations() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <input 
-              type="submit" 
-              value={loading ? "Adding..." : "add admin"} 
+            <input
+              type="submit"
+              value={loading ? "Adding..." : "add admin"}
               disabled={loading}
             />
           </form>
@@ -138,7 +157,14 @@ function Authorisations() {
               admins.map((adm) => (
                 <div className={styles.admin} key={adm.id}>
                   <div className={styles.left}>
-                    <img src={adm.avatar ? `${process.env.REACT_APP_API_URL}${adm.avatar}` : "/email.png"} alt="pic" />
+                    <img
+                      src={
+                        adm.avatar
+                          ? `${process.env.REACT_APP_API_URL}${adm.avatar}`
+                          : "/email.png"
+                      }
+                      alt="pic"
+                    />
                     <h3>{adm.email}</h3>
                   </div>
                   <div className={styles.right}>
