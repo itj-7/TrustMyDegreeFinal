@@ -5,6 +5,7 @@ function Verify() {
   const [code, setCode] = useState("");
   const [result, setResult] = useState(null);
   const [status, setStatus] = useState(null);
+  const [open , setOpen]=useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -69,12 +70,16 @@ function Verify() {
           type="submit"
           value="Verify Certificate ➜"
           className={styles.submit}
+          onClick={()=>setOpen(true)}
         />
       </form>
+      
 
+      {open && <div className={styles.out}>
       {/* SUCCESS */}
       {status === "found" && result && (
         <div className={styles.successBox}>
+          <button className={styles.close} onClick={()=>setOpen(false)}>&times;</button> 
           <h3>Certificate Valid </h3>
 
           <p>
@@ -149,6 +154,7 @@ function Verify() {
       {/* REVOKED */}
       {status === "revoked" && (
         <div className={styles.errorBox}>
+          <button className={styles.close} onClick={()=>setOpen(false)}>&times;</button> 
           <h3>Certificate Revoked </h3>
           <p>This certificate has been invalidated by the institution.</p>
         </div>
@@ -157,10 +163,13 @@ function Verify() {
       {/* NOT FOUND */}
       {status === "not_found" && (
         <div className={styles.errorBox}>
+          <button className={styles.close} onClick={()=>setOpen(false)}>&times;</button> 
           <h3>Certificate Not Found </h3>
           <p>No certificate matches this code.</p>
         </div>
       )}
+  </div>
+    }
 
       <div className={styles.bottomStatus}>
         <div className={styles.online}>

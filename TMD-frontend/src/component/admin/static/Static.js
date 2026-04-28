@@ -12,7 +12,14 @@ defaults.plugins.title.font.size = 20;
 defaults.plugins.title.color = "black";
 
 function Static() {
-  const pieColors = ["#1E3A8A", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444", "#be185d"];
+  const pieColors = [
+    "#1E3A8A",
+    "#10B981",
+    "#F59E0B",
+    "#8B5CF6",
+    "#EF4444",
+    "#be185d",
+  ];
   const [user, setUser] = useState(null);
   const [bargraph, setBargraph] = useState([]);
   const [linegraph, setLinegraph] = useState([]);
@@ -23,8 +30,16 @@ function Static() {
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
       parsed.role === "ADMIN"
-        ? setUser({ name: "Admin", email: parsed.email, avatar: parsed.avatar || null })
-        : setUser({ name: "Super Admin", email: parsed.email, avatar: parsed.avatar || null });
+        ? setUser({
+            name: "Admin",
+            email: parsed.email,
+            avatar: parsed.avatar || null,
+          })
+        : setUser({
+            name: "Super Admin",
+            email: parsed.email,
+            avatar: parsed.avatar || null,
+          });
     }
   }, []);
 
@@ -38,8 +53,11 @@ function Static() {
       .then((data) => {
         const monthlyVerifications = {};
         Object.entries(data.verificationsPerDay).forEach(([day, count]) => {
-          const month = new Date(day).toLocaleString("fr-FR", { month: "short" });
-          monthlyVerifications[month] = (monthlyVerifications[month] || 0) + count;
+          const month = new Date(day).toLocaleString("fr-FR", {
+            month: "short",
+          });
+          monthlyVerifications[month] =
+            (monthlyVerifications[month] || 0) + count;
         });
 
         // Line graph - monthly issuance + verifications
@@ -90,7 +108,14 @@ function Static() {
             <h4>{user ? user.name : "guest"}</h4>
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
-          <img src={user?.avatar ? `${process.env.REACT_APP_API_URL}${user.avatar}` : "/totalcertaficates.png"} alt="ava" />
+          <img
+            src={
+              user?.avatar
+                ? `${process.env.REACT_APP_API_URL}${user.avatar}`
+                : "/totalcertaficates.png"
+            }
+            alt="ava"
+          />
         </div>
       </div>
 
@@ -184,7 +209,14 @@ function Static() {
                 datasets: [
                   {
                     data: piegraph.map((data) => data.value),
-                    backgroundColor: ["#1E3A8A", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444", "#be185d"],
+                    backgroundColor: [
+                      "#1E3A8A",
+                      "#10B981",
+                      "#F59E0B",
+                      "#8B5CF6",
+                      "#EF4444",
+                      "#be185d",
+                    ],
                     borderRadius: 8,
                     spacing: 4,
                   },
@@ -222,7 +254,7 @@ function Static() {
             <span>Top Specialties</span>
           </div>
 
-          <Bar
+          {/* <Bar
             data={{
               labels: bargraph.map((data) => data.label),
               datasets: [
@@ -243,6 +275,70 @@ function Static() {
               scales: {
                 x: { grid: { display: false }, ticks: { display: false } },
                 y: { grid: { display: false } },
+              },
+            }}
+          /> */}
+
+          <Bar
+            data={{
+              labels: bargraph.map((data) => {
+                const words = data.label.split(" ");
+                const lines = [];
+                let current = "";
+
+                words.forEach((word) => {
+                  if ((current + word).length > 15) {
+                    lines.push(current);
+                    current = word;
+                  } else {
+                    current += (current ? " " : "") + word;
+                  }
+                });
+
+                if (current) lines.push(current);
+                return lines;
+              }),
+              datasets: [
+                {
+                  data: bargraph.map((data) => data.value),
+                  backgroundColor: "#1E3A8A",
+                  borderRadius: 8,
+                  barThickness: 30,
+                },
+              ],
+            }}
+            options={{
+              indexAxis: "y",
+              maintainAspectRatio: false,
+
+              layout: {
+                padding: {
+                  left: 30, 
+                },
+              },
+
+              plugins: {
+                legend: { display: false },
+                title: { display: false },
+              },
+
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { display: false },
+                },
+
+                y: {
+                  grid: { display: false },
+
+                  ticks: {
+                    autoSkip: false,
+                    padding: 10,
+                    font: {
+                      size: 12,
+                    },
+                  },
+                },
               },
             }}
           />
