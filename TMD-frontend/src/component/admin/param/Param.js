@@ -18,8 +18,9 @@ function Parameters() {
       parsed.role === "ADMIN"
         ? setUser({ name: "Admin", email: parsed.email, avatar: parsed.avatar || null })
         : setUser({ name: "Super Admin", email: parsed.email, avatar: parsed.avatar || null });
-      if (parsed.avatar) setAvatarPreview(`${process.env.REACT_APP_API_URL}${parsed.avatar}`);
-    }
+      if (parsed.avatar) {
+  setAvatarPreview(parsed.avatar.startsWith("http") ? parsed.avatar : `${process.env.REACT_APP_API_URL}${parsed.avatar}`);
+}}
   }, []);
 
   function handleAvatarChange(e) {

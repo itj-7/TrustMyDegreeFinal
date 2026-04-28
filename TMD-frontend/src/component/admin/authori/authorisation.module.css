@@ -256,3 +256,43 @@
     word-break: break-all;
   }
 }
+
+.toastConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.toastButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.toastConfirmBtn {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.toastConfirmBtn:hover {
+  background-color: #b91c1c;
+}
+
+.toastCancelBtn {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.toastCancelBtn:hover {
+  background-color: #e5e7eb;
+}

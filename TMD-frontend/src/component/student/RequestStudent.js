@@ -149,7 +149,7 @@ function RequestStudent() {
             <div className={styles.option}>
               <h4>3. Delivery Option</h4>
               <div>
-                <div className={styles.option1}>
+                <label className={styles.option1}>
                   <input
                     type="radio"
                     name="delivery"
@@ -161,9 +161,9 @@ function RequestStudent() {
                     <h4>Digital copy only</h4>
                     <p>Fast & Free (Blockchain secured)</p>
                   </div>
-                </div>
+                </label>
 
-                <div className={styles.option1}>
+                <label className={styles.option1}>
                   <input
                     type="radio"
                     name="delivery"
@@ -175,7 +175,7 @@ function RequestStudent() {
                     <h4>Official physical copy</h4>
                     <p>Includes stamp & signature</p>
                   </div>
-                </div>
+                </label>
               </div>
             </div>
           }

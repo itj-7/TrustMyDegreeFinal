@@ -31,6 +31,16 @@ function List() {
       .catch((err) => console.log(err));
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (!e.target.closest(`.${styles.actions}`)) {
+        setOpenMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   /*each column be sorted*/
   function handleSort(key) {
     let direction = "asc";
@@ -461,7 +471,9 @@ function unrevokeCert(id) {
                     </td>
                     <td className={styles.column}>
                       <img
-                        src={cert.student?.avatar ? `${process.env.REACT_APP_API_URL}${cert.student.avatar}` : "/students.jpg"}
+                        src={cert.student?.avatar 
+                          ? (cert.student.avatar.startsWith("http") ? cert.student.avatar : `${process.env.REACT_APP_API_URL}${cert.student.avatar}`) 
+                          : "/students.jpg"}
                         alt="student"
                       />
                       <span className={styles.student}>

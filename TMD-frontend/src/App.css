@@ -40,3 +40,7 @@
 body::-webkit-scrollbar {
   display: none;
 }
+
+button * {
+  pointer-events: none;
+}

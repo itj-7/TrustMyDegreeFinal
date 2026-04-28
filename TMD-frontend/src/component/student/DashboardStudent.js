@@ -1,6 +1,7 @@
 import styles from "./DashboardStudent.module.css";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import api from "../../api";
 
 function DashboardStudent() {
@@ -116,9 +117,9 @@ function DashboardStudent() {
     );
 
     // verified
-    ctx.fillStyle = "#22c55e";
+    ctx.fillStyle = cert.status === "REVOKED" ? "#dc2626" : "#22c55e";
     ctx.font = "bold 12px Arial";
-    ctx.fillText("✓ Blockchain Verified", 30, 75);
+    ctx.fillText(cert.status === "REVOKED" ? "✗ Revoked on Blockchain" : "✓ Blockchain Verified", 30, 75);
 
     // student name
     ctx.fillStyle = "#ffffff";
@@ -248,7 +249,7 @@ function DashboardStudent() {
   function copyShareLink(cert) {
     const verifyUrl = `${process.env.REACT_APP_FRONTEND_URL}/verify?code=${cert.uniqueCode}`;
     navigator.clipboard.writeText(verifyUrl).then(() => {
-      alert("Link copied to clipboard!");
+      toast.success("Link copied to clipboard!");
     });
   }
 
@@ -330,8 +331,12 @@ function DashboardStudent() {
                     <img src="/chain.png" alt="chain" />
                     <p>{cert.uniqueCode}</p>
                   </div>
-                  <span className={`${styles.state} ${styles.verified}`}>
-                    ✓ verified on the Blockchain
+                  <span
+                    className={`${styles.state} ${cert.status === "REVOKED" ? styles.notveri : styles.verified}`}
+                  >
+                    {cert.status === "REVOKED"
+                      ? "✗ Revoked on the Blockchain"
+                      : "✓ verified on the Blockchain"}
                   </span>
                 </div>
                 <div className={styles.button}>
@@ -344,24 +349,7 @@ function DashboardStudent() {
                   <button
                     type="button"
                     onClick={() => openBadgeModal(cert)}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#0077b5",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "8px",
-                      padding: "9px",
-                      cursor: "pointer",
-                      fontWeight: "500",
-                      fontSize: "13px",
-                      transition: "background-color 0.2s ease",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.target.style.backgroundColor = "#005f8e")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.target.style.backgroundColor = "#0077b5")
-                    }
+                    className={styles.shareBtn}
                   >
                     Share
                   </button>
@@ -446,11 +434,7 @@ function DashboardStudent() {
 
         <div className={styles.info}>
           <img
-            src={
-              user?.avatar
-                ? user.avatar
-                : "/totalcertaficates.png"
-            }
+            src={user?.avatar ? user.avatar : "/totalcertaficates.png"}
             alt="ava"
             className={styles.student}
           />
@@ -545,17 +529,7 @@ function DashboardStudent() {
               </span>
               <button
                 onClick={() => copyShareLink(badgeModal)}
-                style={{
-                  backgroundColor: "#4F46E5",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "8px 14px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                  whiteSpace: "nowrap",
-                }}
+                className={styles.copyLinkBtn}
               >
                 Copy Link
               </button>
@@ -571,45 +545,19 @@ function DashboardStudent() {
             >
               <button
                 onClick={downloadBadge}
-                style={{
-                  backgroundColor: "#1e1b4b",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  padding: "12px 20px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                }}
+                className={styles.modalPrimaryBtn}
               >
                 ⬇️ Download Badge
               </button>
               <button
                 onClick={() => shareOnLinkedIn(badgeModal)}
-                style={{
-                  backgroundColor: "#0077b5",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  padding: "12px 20px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                }}
+                className={styles.modalLinkedInBtn}
               >
                 🔗 Share on LinkedIn
               </button>
               <button
                 onClick={closeBadgeModal}
-                style={{
-                  backgroundColor: "#f3f4f6",
-                  color: "#666",
-                  border: "none",
-                  borderRadius: "10px",
-                  padding: "12px 20px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
+                className={styles.modalCancelBtn}
               >
                 Close
               </button>

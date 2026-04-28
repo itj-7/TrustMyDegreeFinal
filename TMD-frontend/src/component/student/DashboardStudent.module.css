@@ -360,22 +360,23 @@
   color: white;
   width: 500px;
   padding: 10px;
+  border: none;
   border-radius: 10px;
-
-  cursor: pointer;
-
-  transition:
-    background-color 0.3s ease,
-    transform 0.2s ease;
   background: linear-gradient(135deg, #2563eb, #1e3a8a);
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.25s ease;
 }
 
 .button > button:first-of-type:hover {
-  background-color: navy;
-  box-shadow: 1px 1px 10px #155dfc;
-  transform: scale(1.02);
-  animation: none;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.45);
+}
+
+.button > button:first-of-type:active {
+  transform: scale(0.96);
 }
 
 /* right side*/
@@ -759,4 +760,72 @@
     width: 60%;
     order: 2;
   }
+}
+
+.shareBtn,
+.modalPrimaryBtn,
+.modalLinkedInBtn {
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+  transition: all 0.25s ease;
+}
+
+.shareBtn {
+  flex: 1;
+  font-size: 13px;
+  padding: 10px;
+}
+
+.shareBtn:hover,
+.modalPrimaryBtn:hover,
+.modalLinkedInBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.45);
+}
+
+.shareBtn:active,
+.modalPrimaryBtn:active,
+.modalLinkedInBtn:active {
+  transform: scale(0.96);
+}
+
+.copyLinkBtn {
+  padding: 8px 18px;
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.copyLinkBtn:hover {
+  background-color: #dcfce7;
+  border-color: #16a34a;
+}
+
+.modalCancelBtn {
+  padding: 12px 20px;
+  background-color: #f9fafb;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalCancelBtn:hover {
+  background-color: #e5e7eb;
+  border-color: #d1d5db;
 }

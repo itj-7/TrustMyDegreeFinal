@@ -77,11 +77,7 @@ function Dashboard() {
             <p>{user ? user.email : "guest25@ensta.edu.dz"}</p>
           </div>
           <img
-            src={
-              user?.avatar
-                ? user.avatar
-                : "/totalcertaficates.png"
-            }
+            src={user?.avatar ? user.avatar : "/totalcertaficates.png"}
             alt="ava"
           />
         </div>
@@ -128,7 +124,9 @@ function Dashboard() {
                     <img
                       src={
                         act.student?.avatar
-                          ? `${process.env.REACT_APP_API_URL}${act.student.avatar}`
+                          ? act.student.avatar.startsWith("http")
+                            ? act.student.avatar
+                            : `${process.env.REACT_APP_API_URL}${act.student.avatar}`
                           : "/stdicon.jpg"
                       }
                       alt="stdicon"

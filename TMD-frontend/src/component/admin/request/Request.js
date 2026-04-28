@@ -39,6 +39,15 @@ function Request() {
     }
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (!e.target.closest(`.${styles.actions}`)) {
+        setOpenMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Centralized fetch to keep stats and list in sync
   const fetchRequests = () => {
