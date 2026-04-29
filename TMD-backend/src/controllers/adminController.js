@@ -589,7 +589,6 @@ const importDiplomas = async (req, res) => {
                     data: { blockchainRegistered: true },
                   });
                 }
-                await new Promise(resolve => setTimeout(resolve, 1000));
 
               // issue rank document on RankRegistry
               blockchainResult = await issueRankDocument({
