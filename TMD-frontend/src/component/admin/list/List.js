@@ -33,7 +33,7 @@ function List() {
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (!e.target.closest(`.${styles.actions}`)) {
+      if (e.target.closest("[data-actions]")) {
         setOpenMenu(null);
       }
     }

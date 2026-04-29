@@ -7,7 +7,7 @@ const generateDiplomaPDF = async (studentData, templateType = "diploma") => {
   let templateName = "certificate.html";
   if (templateType === "scolarite")  templateName = "scolarite.html";
   if (templateType === "internship") templateName = "internship.html";
-  if (templateType === "rank")       templateName = "rank.html"; // ✅ added
+  if (templateType === "rank")       templateName = "rank.html"; 
 
   const templatePath = path.join(__dirname, "../templates", templateName);
   let html = fs.readFileSync(templatePath, "utf8");
