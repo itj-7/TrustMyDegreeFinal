@@ -22,6 +22,7 @@ import Verifie from "./component/admin/verify/Verifie";
 import DashboardStudent from "./component/student/DashboardStudent";
 import Settings from "./component/student/Settings";
 import RequestStudent from "./component/student/RequestStudent";
+import ForgotPassword from "./component/login/ForgotPassword";
 function App() {
   return (
     <BrowserRouter>
@@ -35,6 +36,7 @@ function App() {
           </Route>
 
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin/*" element={<Admin />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />

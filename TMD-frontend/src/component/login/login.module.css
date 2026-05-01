@@ -238,7 +238,7 @@ body {
 }
 
 .inp {
-  width: 85%;
+  width: 87%;
   color: blue;
   border: 1px solid #193cb880;
   border-radius: 14px;
@@ -264,7 +264,7 @@ input::placeholder {
 }
 
 .sign {
-  width: 88%;
+  width: 87%;
   height: 40px;
   padding: 10px;
   background-color: #2b7fff;
@@ -275,13 +275,14 @@ input::placeholder {
   margin-top: 40px;
   box-shadow: 0 0 5px white;
   position: relative;
-  right: 7px;
+  right: 17px;
 }
 
 .sign:hover {
   background-color: #193cb880;
   box-shadow: 0 0 10px white;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .hr {
@@ -307,7 +308,21 @@ input::placeholder {
 a:hover {
   text-decoration: underline;
 }
+.forgot {
+  text-align: right;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
 
+.forgot a {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+.forgot a:hover {
+  text-decoration: underline;
+}
 /*responsive*/
 
 /* ─── TABLET (max 1024px) ─── */
