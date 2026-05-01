@@ -46,7 +46,11 @@ function Creators() {
             <h4 className={styles.name}>Arar Bouchra Manel</h4>
             <h4 className={styles.role}>Frontend Lead</h4>
             <p className={styles.year}> 2nd Year · MI</p>
-            <p className={styles.desc}> intoduction</p>
+            <p className={styles.desc}>
+              {" "}
+              Fully owned the frontend, enforcing structure, performance, and a
+              clean, uncompromising user experience.
+            </p>
             <div className={styles.links}>
               <a
                 href="https://github.com/wolfey-cmyk"

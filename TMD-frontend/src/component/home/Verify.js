@@ -1,6 +1,6 @@
 import styles from "./Verify.module.css";
 import { useState, useEffect } from "react";
-
+import { toast } from "react-hot-toast";
 function Verify() {
   const [code, setCode] = useState("");
   const [result, setResult] = useState(null);
@@ -35,7 +35,7 @@ function Verify() {
           setStatus("not_found");
         }
       })
-      .catch((err) => window.alert(err));
+      .catch((err) => toast.error("failed to fetch"));
   }
 
   function handleVerify(e) {
