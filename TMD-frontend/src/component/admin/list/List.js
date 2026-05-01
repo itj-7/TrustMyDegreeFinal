@@ -473,7 +473,7 @@ function unrevokeCert(id) {
                       <img
                         src={cert.student?.avatar 
                           ? (cert.student.avatar.startsWith("http") ? cert.student.avatar : `${process.env.REACT_APP_API_URL}${cert.student.avatar}`) 
-                          : "/students.jpg"}
+                          : "/Students.jpg"}
                         alt="student"
                       />
                       <span className={styles.student}>
