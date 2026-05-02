@@ -76,7 +76,7 @@ function Creators() {
             <h4 className={styles.name}>Benloulou Nadjah Cirine</h4>
             <h4 className={styles.role}>Backend lead & Designer</h4>
             <p className={styles.year}> 2nd Year · MI</p>
-            <p className={styles.desc}>intoduction</p>
+            <p className={styles.desc}>Built the backend infrastructure powering TrustMyDegree handling  student and admin workflows, document request management, and data reporting. Co-designed the UI/UX of the platform alongside the team, contributing to the overall look and feel from the landing page to the admin dashboard.</p>
             <div className={styles.links}>
               <a
                 href="https://github.com/BENLOULOUNADJAHCIRINE"
@@ -102,7 +102,7 @@ function Creators() {
             <h4 className={styles.role}>Team lead & Blockchain lead</h4>
             <p className={styles.year}> 2nd Year · MI</p>
             <p className={styles.desc}>built the blockchain layer from scratch. Solidity contracts,
-        Hardhat deployments, and every on-chain decision that matters — all while keeping
+        Hardhat deployments, and every on-chain decision that matters ,all while keeping
         the team moving forward.</p>
             <div className={styles.links}>
               <a
