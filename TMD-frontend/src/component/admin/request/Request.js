@@ -13,7 +13,6 @@ function Request() {
     direction: "asc",
   });
   const [searchInput, setSearchInput] = useState("");
-  const [selectedIds, setSelectedIds] = useState([]);
   /*each column be sorted*/
   function handleSort(key) {
     let direction = "asc";
@@ -31,7 +30,6 @@ function Request() {
   const [total, setTotal]             = useState(0);
   const [loading, setLoading]         = useState(false);
   const LIMIT = 10;
-  const perPage = 5;
   const pagesPerGroup = 3;
 
   useEffect(() => {
@@ -93,48 +91,13 @@ function Request() {
     return () => clearTimeout(t);
   }, [searchInput, fetchRequests]);
 
-  const filteredRequests = request.filter(
-    (req) =>
-      req.id?.toLowerCase().includes(search.toLowerCase()) ||
-      req.student?.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-      req.student?.matricule?.toLowerCase().includes(search.toLowerCase()) ||
-      req.documentType?.toLowerCase().includes(search.toLowerCase()) ||
-      req.priority?.toLowerCase().includes(search.toLowerCase()) ||
-      req.createdAt?.toLowerCase().includes(search.toLowerCase()) ||
-      req.reason?.toLowerCase().includes(search.toLowerCase()),
-  );
 
-  const sortedRequests = [...filteredRequests].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-
-    let aValue;
-    let bValue;
-
-    switch (sortConfig.key) {
-      case "student":
-        aValue = a.student?.fullName || "";
-        bValue = b.student?.fullName || "";
-        break;
-      case "createdAt":
-        aValue = new Date(a.createdAt);
-        bValue = new Date(b.createdAt);
-        break;
-
-      default:
-        aValue = a[sortConfig.key];
-        bValue = b[sortConfig.key];
-    }
-
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
 
   function resetTable() {
     setSearchInput("");
     setSearch("");
     setSortConfig({ key: null, direction: "asc" });
-    fetchRequests(1, "");
+    setCurrentPage(1);
   }
 
   // Handle Export
