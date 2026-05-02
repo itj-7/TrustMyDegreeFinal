@@ -49,18 +49,18 @@ function Verify() {
         Verify Your Diploma <span> Instantly </span>
       </h1>
       <p>
-        Enter a diploma ID, QR code, or graduate email to check authenticity
+        Enter a diploma ID, QR code to check authenticity
         against our global blockchain ledger.
       </p>
 
       <form className={styles.verify} onSubmit={handleVerify}>
         <div className={styles.info}>
-          <h6>ID du Certificat</h6>
+          <h6>Certificate Unique Code</h6>
           <div className={styles.inputBox}>
             <img src="/inputee.png" alt="inputee" />
             <input
               type="text"
-              placeholder="#1847"
+              placeholder="CERT-XXXXXXXXX-XXXXXXXXXXX"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
