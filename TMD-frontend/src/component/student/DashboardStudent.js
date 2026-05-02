@@ -415,10 +415,7 @@ function DashboardStudent() {
       </div>
 
       <div className={styles.policy}>
-        <h4>
-          © 2026 TrustMyDegree ENSTA - Verix Solution for Decentralized Academic
-          Management.
-        </h4>
+        <h4>Secured by TrustMyDegree Protocol •</h4>
       </div>
 
       <div className={styles.login}>
@@ -451,7 +448,7 @@ function DashboardStudent() {
           />
           <div className={styles.subinfo}>
             <h4>{user ? user.name : "guest"}</h4>
-            <p>{user?.isGraduated ? "Graduated ✅" : "Not graduated yet"}</p>
+            <p>{user?.isGraduated ? "Graduated " : "Not graduated yet"}</p>
           </div>
           <img
             src="/exit.png"
