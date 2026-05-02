@@ -369,7 +369,15 @@ function Home() {
 
           <div className={styles.platform}>
             <h3> Platform</h3>
-            <p>Institutional Portal</p>
+            <div>
+              <a
+                href="https://ensta.edu.dz/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Institutional Portal
+              </a>
+            </div>
             <div>
               <img src="/fac.png" alt="facebook" />
               <a
