@@ -578,16 +578,20 @@ const importDiplomas = async (req, res) => {
 
     for (const row of rows) {
       const matricule = String(row.matricule);
+      console.log(`\n[IMPORT] ── Processing matricule: ${matricule} ──`);
 
       // ── 1. Find student ───────────────────────────────────────
       const student = await prisma.user.findUnique({
         where: { matricule },
-      }).catch(() => null);
+      }).catch((e) => { console.error(`[IMPORT] DB findUnique error:`, e.message); return null; });
 
       if (!student) {
+        console.log(`[IMPORT] ❌ Student not found for matricule: ${matricule}`);
         errors.push({ matricule, error: "student not found" });
         continue;
       }
+      console.log(`[IMPORT] ✅ Student found: ${student.fullName} (id: ${student.id})`);
+
 
       // ── 2. Duplicate check — skip only if ACTIVE cert exists ──
       const existingCert = await prisma.certificate.findFirst({
@@ -595,9 +599,11 @@ const importDiplomas = async (req, res) => {
       }).catch(() => null);
 
       if (existingCert) {
+        console.log(`[IMPORT] ⚠️ Active cert already exists for ${matricule}, skipping`);
         errors.push({ matricule, error: "certificate already exists (active)" });
         continue;
       }
+      console.log(`[IMPORT] ✅ No active cert found, proceeding to issue`);
 
       // ── 3. Blockchain issuance ────────────────────────────────
       let blockchainResult;
