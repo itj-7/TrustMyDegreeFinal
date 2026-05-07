@@ -1,3 +1,13 @@
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .main-content {
   height: 100%;
   display: flex;
@@ -8,6 +18,7 @@
   background: radial-gradient(circle at top, #e0ecff, #f8fafc);
   position: relative;
   cursor: default;
+  animation: fadeUp 0.8s ease-out;
 }
 
 .main-content > h1 {
@@ -129,22 +140,20 @@
 }
 
 .close {
-  width: 32px;
-  height: 32px;
-
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  font-size: 18px;
-  font-weight: 600;
-
+  font-size: 17px;
+  font-weight: 500;
   color: #6b7280;
-  background: #f3f4f6;
-
+  background: #ececec;
   border: none;
   border-radius: 50%;
-
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -161,16 +170,90 @@
 
 .successBox,
 .errorBox {
-  margin-top: 10px;
-  padding: 12px 14px;
-  border-radius: 10px;
+  width: min(460px, 90%);
+  max-height: 85vh;
+  border-radius: 18px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-width: 320px;
-  font-size: 13px;
-  line-height: 1.4;
+  gap: 0;
+  box-shadow:
+    0 8px 32px rgba(5, 150, 105, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.08);
   animation: popIn 0.25s ease;
+  position: relative;
+  align-items: stretch;
+}
+
+.successBox {
+  background: white;
+  border: 1px solid #d1fae5;
+  box-shadow:
+    0 0 40px rgba(5, 150, 105, 0.15),
+    0 20px 60px rgba(0, 0, 0, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.errorBox {
+  background: #fef2f2;
+  border: 1px solid #dc2626;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1.5px solid #d1fae5;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  justify-content: center;
+}
+
+.header h2 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  padding: 9px 4px;
+  border-bottom: 0.5px solid #e5e7eb;
+  font-size: 14px;
+  align-items: flex-start;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item span {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.item strong {
+  font-weight: 500;
+}
+
+.contentScroll {
+  overflow-y: auto;
+  max-height: 60vh;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.contentScroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 10px;
 }
 
 @keyframes popIn {
@@ -184,24 +267,6 @@
   }
 }
 
-.successBox {
-  margin-top: 20px;
-  width: 100%;
-  max-width: 420px;
-  margin-left: 250px;
-  background: #ecfdf5;
-  border: 1px solid #10b981;
-
-  border-radius: 14px;
-  padding: 16px;
-
-  color: #065f46;
-
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .errorBox {
   margin-top: 20px;
   width: 100%;
@@ -209,10 +274,8 @@
   margin-left: 250px;
   background: #fef2f2;
   border: 1px solid #ef4444;
-
   border-radius: 14px;
   padding: 16px;
-
   color: #991b1b;
 }
 

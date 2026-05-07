@@ -14,8 +14,7 @@ const {
   issueDocument,
   issueRankDocument,
   addStudentToRankRegistry,
-} = require("../services/blockchain.service");
-const {
+  updateStudentInRankRegistry,
   revokeCertificate: revokeCertificateOnChain,
   unrevokeCertificate: unrevokeCertificateOnChain,
   verifyCertificate,
@@ -47,13 +46,25 @@ const dashboard = async (req, res) => {
 
     const recentActivity = await prisma.certificate.findMany({
       take: 10,
-      include: {
-        student: true,
+      select: {
+        id: true,
+        uniqueCode: true,
+        type: true,
+        contractType: true,
+        status: true,
+        issueDate: true,
+        student: {
+          select: {
+            fullName: true,
+            avatar: true,
+          },
+        },
       },
       orderBy: {
         issueDate: "desc",
       },
     });
+
     res.status(200).json({
       totalCertificates,
       activeCertificates,
@@ -67,52 +78,140 @@ const dashboard = async (req, res) => {
   }
 };
 
-// get all certificates for the list page
 const getAllCertificates = async (req, res) => {
   try {
-    const certificates = await prisma.certificate.findMany({
-      include: { student: true },
-      orderBy: { issueDate: "desc" },
+    const page   = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit  = Math.min(50, parseInt(req.query.limit) || 8);
+    const skip   = (page - 1) * limit;
+
+    const { search, status, sortKey, sortDir } = req.query;
+
+    const where = {};
+    if (status && status !== "ALL") where.status = status;
+    if (search) {
+      where.OR = [
+        { student: { fullName:  { contains: search, mode: "insensitive" } } },
+        { student: { matricule: { contains: search, mode: "insensitive" } } },
+        { type:      { contains: search, mode: "insensitive" } },
+        { specialty: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const allowedSortKeys = {
+      issueDate:  { issueDate: sortDir === "desc" ? "desc" : "asc" },
+      status:     { status:    sortDir === "desc" ? "desc" : "asc" },
+      type:       { type:      sortDir === "desc" ? "desc" : "asc" },
+      specialty:  { specialty: sortDir === "desc" ? "desc" : "asc" },
+      student:    { student: { fullName: sortDir === "desc" ? "desc" : "asc" } },
+      matricule:  { student: { matricule: sortDir === "desc" ? "desc" : "asc" } },
+    };
+    const orderBy = allowedSortKeys[sortKey] || { issueDate: "desc" };
+
+    const [total, certificates] = await Promise.all([
+      prisma.certificate.count({ where }),
+      prisma.certificate.findMany({
+        where,
+        select: {
+          id: true,
+          type: true,
+          specialty: true,
+          status: true,
+          issueDate: true,
+          contractType: true,
+          blockchainCertId: true,
+          ipfsHash: true,
+          student: {
+            select: {
+              fullName: true,
+              matricule: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy,
+        take: limit,
+        skip,
+      }),
+    ]);
+
+    res.status(200).json({
+      certificates,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     });
-    res.status(200).json({ certificates });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "an error occurred in the server" });
   }
 };
 
-// get all requests
 const getRequests = async (req, res) => {
   try {
-    const totalRequests = await prisma.request.count();
-    const pendingRequests = await prisma.request.count({
-      where: { status: "PENDING" },
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 10);
+    const skip  = (page - 1) * limit;
+
+    const { search, status } = req.query;
+
+    const where = {};
+    if (status && status !== "ALL") where.status = status;
+    if (search) {
+      where.OR = [
+        { student: { fullName:  { contains: search, mode: "insensitive" } } },
+        { student: { matricule: { contains: search, mode: "insensitive" } } },
+        { documentType: { contains: search, mode: "insensitive" } },
+        { reason:       { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const [statusGroups, total, requests] = await Promise.all([
+      prisma.request.groupBy({ by: ["status"], _count: { id: true } }),
+      prisma.request.count({ where }),
+      prisma.request.findMany({
+        where,
+        select: {
+          id: true,
+          documentType: true,
+          reason: true,
+          delivery: true,
+          priority: true,
+          status: true,
+          ipfsHash: true,
+          blockchainDocId: true,
+          fileUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          student: { select: { fullName: true, matricule: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip,
+      }),
+    ]);
+
+    const summary = { total: 0, pending: 0, approved: 0, rejected: 0 };
+    statusGroups.forEach(g => {
+      summary.total += g._count.id;
+      if (g.status === "PENDING")  summary.pending  = g._count.id;
+      if (g.status === "APPROVED") summary.approved = g._count.id;
+      if (g.status === "REJECTED") summary.rejected = g._count.id;
     });
-    const approvedRequests = await prisma.request.count({
-      where: { status: "APPROVED" },
-    });
-    const rejectedRequests = await prisma.request.count({
-      where: { status: "REJECTED" },
-    });
-    const fullList = await prisma.request.findMany({
-      include: {
-        student: true,
-      },
-    });
+
     res.status(200).json({
-      requests: fullList,
-      summary: {
-        total: totalRequests,
-        pending: pendingRequests,
-        approved: approvedRequests,
-        rejected: rejectedRequests,
-      },
+      requests,
+      summary,
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (err) {
-    res.status(500).json({ error: "an error occured in the server" });
+    console.error(err);
+    res.status(500).json({ error: "an error occurred in the server" });
   }
 };
 
-// request approval or rejection
 const handleRequestStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -177,12 +276,24 @@ const handleRequestDocument = async (req, res) => {
     fs.unlinkSync(uploadPath);
 
     // store on blockchain
-    const blockchainResult = await issueDocument({
-      studentId: findRequest.student.matricule,
-      studentName: findRequest.student.fullName,
-      documentType: findRequest.documentType,
-      ipfsHash,
-    });
+    let blockchainResult;
+    try {
+      blockchainResult = await issueDocument({
+        studentId: findRequest.student.matricule,
+        studentName: findRequest.student.fullName,
+        documentType: findRequest.documentType,
+        ipfsHash,
+      });
+    } catch (blockchainErr) {
+      const isDuplicate = blockchainErr?.reason?.toLowerCase().includes("already exists") ||
+                          blockchainErr?.message?.toLowerCase().includes("already exists");
+      if (isDuplicate) {
+        return res.status(400).json({
+          message: `Student already has an active "${findRequest.documentType}" document. Revoke it first before uploading a new one.`,
+        });
+      }
+      throw blockchainErr;
+    }
 
     await prisma.request.update({
       where: { id },
@@ -193,12 +304,14 @@ const handleRequestDocument = async (req, res) => {
       },
     });
 
-    await sendEmail(
-      findRequest.student.email,
-      "Document Ready for Download",
-      `<h2>Hello ${findRequest.student.fullName}</h2>
-       <p>The document you requested (<strong>${findRequest.documentType}</strong>) is ready on your dashboard.</p>`,
-    );
+    if (findRequest.student.email) {
+      await sendEmail(
+        findRequest.student.email,
+        "Document Ready for Download",
+        `<h2>Hello ${findRequest.student.fullName}</h2>
+         <p>The document you requested (<strong>${findRequest.documentType}</strong>) is ready on your dashboard.</p>`,
+      ).catch((err) => console.warn("Email failed:", err.message));
+    }
 
     res.status(200).json({
       message:
@@ -310,8 +423,8 @@ const unrevokeCertificate = async (req, res) => {
       if (c.blockchainCertId) {
         const isActive = await verifyCertificate(c.contractType, c.blockchainCertId);
         if (isActive) {
-          return res.status(400).json({ 
-            message: "Cannot unrevoke — another active certificate already exists for this student on the blockchain. Revoke it first." 
+          return res.status(400).json({
+            message: "Cannot unrevoke — another active certificate already exists for this student on the blockchain. Revoke it first.",
           });
         }
       }
@@ -370,54 +483,58 @@ const changePassword = async (req, res) => {
   }
 };
 
-// sync students
 const syncStudents = async (req, res) => {
   try {
     const result = await universityDB.query("SELECT * FROM students");
     const students = result.rows;
-    if (students.length == 0) {
+    if (students.length === 0) {
       return res
         .status(404)
         .json({ message: "no students found in university database" });
     }
+
     let created = 0;
     let skipped = 0;
 
-    for (const student of students) {
-      const exists = await prisma.user.findUnique({
-        where: { matricule: student.matricule },
-      });
-      if (exists) {
-        skipped++;
-        continue;
-      }
+    const incomingMatricules = students.map(s => s.matricule);
+    const existing = await prisma.user.findMany({
+      where: { matricule: { in: incomingMatricules } },
+      select: { matricule: true },
+    });
+    const existingSet = new Set(existing.map(u => u.matricule));
 
-      const dateOfBirth = student.date_of_birth.toLocaleDateString("en-CA");
-      const hashed = await bcrypt.hash(dateOfBirth, 10);
-      await prisma.user.create({
-        data: {
-          fullName: student.full_name,
-          matricule: student.matricule,
-          password: hashed,
-          role: "STUDENT",
-          dateOfBirth: dateOfBirth,
-          placeOfBirth: student.place_of_birth,
-          isGraduated: student.is_graduated,
-          email: student.email,
-        },
-      });
-      await sendEmail(
-        student.email,
-        "Welcome to TrustMyDegree",
-        `<h2>Hello ${student.full_name}</h2>
+    const toCreate = students.filter(s => !existingSet.has(s.matricule));
+    skipped = students.length - toCreate.length;
+
+    await Promise.all(
+      toCreate.map(async (student) => {
+        const dateOfBirth = student.date_of_birth.toLocaleDateString("en-CA");
+        const hashed = await bcrypt.hash(dateOfBirth, 10);
+        await prisma.user.create({
+          data: {
+            fullName:    student.full_name,
+            matricule:   student.matricule,
+            password:    hashed,
+            role:        "STUDENT",
+            dateOfBirth: dateOfBirth,
+            placeOfBirth: student.place_of_birth,
+            isGraduated: student.is_graduated,
+            email:       student.email,
+          },
+        });
+        sendEmail(
+          student.email,
+          "Welcome to TrustMyDegree",
+          `<h2>Hello ${student.full_name}</h2>
    <p>Your account has been created on TrustMyDegree.</p>
    <p><strong>Matricule:</strong> ${student.matricule}</p>
    <p><strong>Password:</strong> ${dateOfBirth}</p>
    <p>Please login and change your password as soon as possible.</p>
    <p>TrustMyDegree Team</p>`,
-      );
-      created++;
-    }
+        ).catch(err => console.warn(`Email failed for ${student.matricule}:`, err.message));
+        created++;
+      })
+    );
 
     res.json({
       message: "sync completed",
@@ -434,7 +551,6 @@ const syncStudents = async (req, res) => {
 // import diplomas from excel file
 const importDiplomas = async (req, res) => {
   try {
-    // ✅ FIX: destructure both graduationDate and issueDate from req.body
     const {
       issueDate,
       graduationDate,
@@ -444,231 +560,247 @@ const importDiplomas = async (req, res) => {
       class: level,
     } = req.body;
 
-    const file = req.files.excel;
+    const file = req.files?.excel;
 
-    if (!file) return res.status(400).json({ message: "no file uploaded" });
-
-    // ✅ FIX: proper date validation
+    if (!file)        return res.status(400).json({ message: "no file uploaded" });
+    if (!templateType) return res.status(400).json({ message: "templateType is required" });
     if (!graduationDate && !issueDate)
       return res.status(400).json({ message: "date is required" });
 
-    if (!templateType)
-      return res.status(400).json({ message: "templateType is required" });
-
-    // ✅ diploma uses graduationDate, everything else uses issueDate
     const date = templateType === "diploma" ? graduationDate : issueDate;
 
     const workbook = XLSX.read(file.data);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+    const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+    const rows     = XLSX.utils.sheet_to_json(sheet);
 
     if (rows.length === 0)
       return res.status(400).json({ message: "excel file is empty" });
 
-    // map templateType coming from frontend to the contract name
     const contractType =
-      templateType === "internship"
-        ? "INTERNSHIP"
-        : templateType === "scolarite"
-          ? "STUDY"
-          : templateType === "rank"
-            ? "RANK"
-            : "DIPLOMA";
+      templateType === "internship" ? "INTERNSHIP"
+      : templateType === "scolarite" ? "STUDY"
+      : templateType === "rank"      ? "RANK"
+      : "DIPLOMA";
+
+    const specialityMap = {
+      "cp-mi": "Mathématiques et Informatique",
+      "cp-st": "Sciences et Technologies",
+    };
 
     let created = 0;
-    const errors = [];
+    const errors  = [];
 
     for (const row of rows) {
+      const matricule = String(row.matricule);
+      console.log(`\n[IMPORT] ── Processing matricule: ${matricule} ──`);
+
+      // ── 1. Find student ───────────────────────────────────────
+      const student = await prisma.user.findUnique({
+        where: { matricule },
+      }).catch((e) => { console.error(`[IMPORT] DB findUnique error:`, e.message); return null; });
+
+      if (!student) {
+        console.log(`[IMPORT] ❌ Student not found for matricule: ${matricule}`);
+        errors.push({ matricule, error: "student not found" });
+        continue;
+      }
+      console.log(`[IMPORT] ✅ Student found: ${student.fullName} (id: ${student.id})`);
+
+
+      // ── 2. Duplicate check — skip only if ACTIVE cert exists ──
+      const allCertsForStudent = await prisma.certificate.findMany({
+        where: { studentId: student.id },
+        select: { id: true, contractType: true, status: true },
+      }).catch(() => []);
+      console.log(`[IMPORT] ALL certs for ${matricule}:`, JSON.stringify(allCertsForStudent));
+      console.log(`[IMPORT] Looking for contractType: "${contractType}" status: "ACTIVE"`);
+
+      const existingCert = await prisma.certificate.findFirst({
+        where: { studentId: student.id, contractType, status: "ACTIVE" },
+      }).catch(() => null);
+      console.log(`[IMPORT] existingCert result:`, JSON.stringify(existingCert));
+
+      if (existingCert) {
+        console.log(`[IMPORT] ⚠️ Active cert already exists for ${matricule}, skipping`);
+        errors.push({ matricule, error: "certificate already exists (active)" });
+        continue;
+      }
+      console.log(`[IMPORT] ✅ No active cert found, proceeding to issue`);
+
+      // ── 3. Blockchain issuance ────────────────────────────────
+      let blockchainResult;
       try {
-        const student = await prisma.user.findUnique({
-          where: { matricule: String(row.matricule) },
-        });
-
-        if (!student) {
-          errors.push({ matricule: row.matricule, error: "student not found" });
-          continue;
-        }
-
-        // duplicate check — one certificate per student per contractType
-        const existingCert = await prisma.certificate.findFirst({
-          where: { 
-            studentId: student.id,
-            contractType,
-            status: "ACTIVE"
-          },
-        });
-
-        if (existingCert) {
-          errors.push({
-            matricule: row.matricule,
-            error: "certificate already exists",
-          });
-          continue;
-        }
-
-        const uniqueCode = `CERT-${student.matricule}-${Date.now()}`;
-
-        // store on blockchain
-        // ipfsHash is "pending" because we don't have the PDF yet
-        let blockchainResult;
-
         if (contractType === "DIPLOMA") {
           blockchainResult = await issueDiploma({
-            studentId: student.matricule,
+            studentId:   student.matricule,
             studentName: student.fullName,
-            degreeName: row.type || templateType,
+            degreeName:  row.type || templateType,
             fieldOfStudy: row.speciality || "",
-            ipfsHash: "pending",
+            ipfsHash:    "pending",
           });
+
         } else if (contractType === "INTERNSHIP") {
-          // Try multiple column names for internship role
-          const internshipRole = row.speciality || row.specialty || row.role || row.position || row.internshipRole || row["Internship Role"] || row["Role"];
-          if (!internshipRole || internshipRole.trim() === "") {
-            console.error(`Internship data for ${row.matricule}:`, JSON.stringify(row));
-            throw new Error(`Internship role/specialty is required. Available columns: ${Object.keys(row).join(", ")}`);
+          const internshipRole =
+            row.speciality    || row.specialty      || row.role     ||
+            row.position      || row.internshipRole ||
+            row["Internship Role"]                  || row["Role"];
+
+          if (!internshipRole?.trim()) {
+            throw new Error(
+              `Internship role is required. Columns found: ${Object.keys(row).join(", ")}`
+            );
           }
 
           const start = row.startDate ? new Date(row.startDate) : null;
-          let end = row.endDate ? new Date(row.endDate) : null;
+          const end   = row.endDate   ? new Date(row.endDate)   : null;
 
-          if (!start || !end) {
+          if (!start || !end)
             throw new Error("Start date and end date are required for internships");
-          }
-
-          if (new Date(end) <= new Date(start)) {
+          if (end <= start)
             throw new Error("End date must be after start date");
-          }
 
-          const endDate = new Date(end);
-          endDate.setDate(endDate.getDate() + 1);
+          const endAdj = new Date(end);
+          endAdj.setDate(endAdj.getDate() + 1);
 
           blockchainResult = await issueInternship({
-            studentId: student.matricule,
-            studentName: student.fullName,
-            companyName: row.company || row.Company || "ENSTA",
+            studentId:      student.matricule,
+            studentName:    student.fullName,
+            companyName:    row.company || row.Company || "ENSTA",
             internshipRole: internshipRole.trim(),
             internshipCity: row.internshipCity || row.city || row.City || "",
-            ipfsHash: "pending",
-            startDate: start.toISOString(),
-            endDate: endDate.toISOString(),
+            ipfsHash:       "pending",
+            startDate:      start.toISOString(),
+            endDate:        endAdj.toISOString(),
           });
-          }  else if (contractType === "RANK") {
-              const rankValue = Number(row["rank"] || 0);
-              const nomValue = row["familyName"] || "";
-              const prenomValue = row["name"] || "";
-              const averageValue = String(row["average"] || "0");
-              const creditsValue = Number(row["credits"] || 0);
-              const sessionValue = String(row["session"] || "NORMAL")
-                .toLowerCase()
-                .includes("rattrapage") ? "RATTRAPAGE" : "NORMAL";
 
-              // register student in RankRegistry first (contract requires studentExists)
-                try {
-                  await addStudentToRankRegistry({
-                    matricule: student.matricule,
-                    name: prenomValue || student.fullName?.split(" ")[0] || "",
-                    familyName: nomValue || student.fullName?.split(" ").slice(1).join(" ") || "",
-                    speciality: speciality || "",
-                    branch: branch || "",
-                    year: level || "",
-                    rank: rankValue,
-                    average: averageValue,
-                    credits: creditsValue,
-                    session: sessionValue,
-                  });
+        } else if (contractType === "RANK") {
+          const rankValue    = Number(row["rank"]    || 0);
+          const averageValue = String(row["average"] || "0");
+          const creditsValue = Number(row["credits"] || 0);
+          const sessionValue = String(row["session"] || "NORMAL")
+            .toLowerCase().includes("rattrapage") ? "RATTRAPAGE" : "NORMAL";
 
-                  await prisma.user.update({
-                    where: { id: student.id },
-                    data: { blockchainRegistered: true },
-                  });
-                } catch (err) {
-                  // student already exists on chain — still mark as registered
-                  console.log(`Student ${student.matricule} rank registry:`, err.message);
-                  await prisma.user.update({
-                    where: { id: student.id },
-                    data: { blockchainRegistered: true },
-                  });
-                }
-                await new Promise(resolve => setTimeout(resolve, 1000));
+          const rankPayload = {
+            matricule:  student.matricule,
+            name:       row["name"]       || student.fullName?.split(" ")[0]          || "",
+            familyName: row["familyName"] || student.fullName?.split(" ").slice(1).join(" ") || "",
+            speciality: speciality || "",
+            branch:     branch     || "",
+            year:       level      || "",
+            rank:       rankValue,
+            average:    averageValue,
+            credits:    creditsValue,
+            session:    sessionValue,
+          };
 
-              // issue rank document on RankRegistry
-              blockchainResult = await issueRankDocument({
-                matricule: student.matricule,
-                documentType: "Rank Certificate",
-                description: `Rank ${rankValue} — ${speciality || ""}`,
-                ipfsHash: "pending",
-              });
-            }else {
+          try {
+            await addStudentToRankRegistry(rankPayload);
+          } catch (addErr) {
+            if (addErr.message?.toLowerCase().includes("already exists")) {
+              await updateStudentInRankRegistry(rankPayload);
+            } else {
+              throw addErr;
+            }
+          }
+
+          try {
+            await prisma.user.update({
+              where: { id: student.id },
+              data:  { blockchainRegistered: true },
+            });
+          } catch (dbErr) {
+            console.error(`blockchainRegistered update failed for ${matricule}:`, dbErr.message);
+          }
+
+          blockchainResult = await issueRankDocument({
+            matricule:    student.matricule,
+            documentType: "Rank Certificate",
+            description:  `Rank ${rankValue} — ${speciality || ""}`,
+            ipfsHash:     "pending",
+          });
+
+        } else {
           // STUDY / scolarite
           blockchainResult = await issueStudyCertificate({
-            studentId: student.matricule,
-            studentName: student.fullName,
-            programName: row.speciality || "",
-            academicYear: row.academicYear || date,
+            studentId:       student.matricule,
+            studentName:     student.fullName,
+            programName:     row.speciality || "",
+            academicYear:    row.academicYear || date,
             certificateType: row.type || templateType,
-            ipfsHash: "pending",
+            ipfsHash:        "pending",
           });
         }
+      } catch (blockchainErr) {
+        console.error(`Blockchain issuance failed for ${matricule}:`, blockchainErr.message);
+        errors.push({ matricule, error: `Blockchain error: ${blockchainErr.message}` });
+        continue;
+      }
 
-        const specialityMap = {
-          "cp-mi": "Mathématiques et Informatique",
-          "cp-st": "Sciences et Technologies",
-        };
+      // ── 4. Save certificate to DB ─────────────────────────────
+      const uniqueCode      = `CERT-${student.matricule}-${Date.now()}`;
+      const specialityKey   = `${speciality}-${branch}`.toLowerCase();
+      const resolvedSpecialty =
+        specialityMap[specialityKey] || speciality || row.speciality || row.specialty || "";
 
-        const specialityKey = `${speciality}-${branch}`.toLowerCase();
-        const resolvedSpecialty = specialityMap[specialityKey] || speciality || row.speciality || row.specialty || "";
-
-        // save to Prisma
+      try {
         await prisma.certificate.create({
           data: {
-            studentId: student.id,
+            studentId:        student.id,
             uniqueCode,
-            ipfsHash: null,    
-            certData: {             
-              fullName: student.fullName,
-              matricule: student.matricule,
-              specialty: resolvedSpecialty,
-              faculty: row.faculty || "",
-              sectionNum: String(row.sectionNum || ""),
-              facultyNum: String(row.facultyNum || ""),
-              mention: row.mention || "",
+            ipfsHash:         null,
+            certData: {
+              fullName:       student.fullName,
+              matricule:      student.matricule,
+              specialty:      resolvedSpecialty,
+              faculty:        row.faculty        || "",
+              sectionNum:     String(row.sectionNum || ""),
+              facultyNum:     String(row.facultyNum || ""),
+              mention:        row.mention        || "",
               graduationDate,
-              issueDate: new Date().toISOString().split("T")[0],
+              issueDate:      new Date().toISOString().split("T")[0],
               uniqueCode,
-              academicYear: row.academicYear || "",
-              year: row.year || "",
-              company: row.company || "",
-              duration: row.duration || "",
-              startDate: row.startDate || "",
-              birthDate: student.dateOfBirth || "",
-              birthPlace: student.placeOfBirth || "",
-              endDate: row.endDate || "",
+              academicYear:   row.academicYear   || "",
+              year:           row.year           || "",
+              company:        row.company        || "",
+              duration:       row.duration       || "",
+              startDate:      row.startDate      || "",
+              birthDate:      student.dateOfBirth  || "",
+              birthPlace:     student.placeOfBirth || "",
+              endDate:        row.endDate        || "",
               internshipCity: row.internshipCity || "",
-              level: row.level || "",
-              field: row.field || "",
-              average: row.average || "",
-              rank: row.rank || "",
-              branch: branch || "",
-              class: level || "",
+              level:          row.level          || "",
+              field:          row.field          || "",
+              average:        row.average        || "",
+              rank:           row.rank           || "",
+              branch:         branch             || "",
+              class:          level              || "",
               templateType,
             },
             blockchainCertId: blockchainResult.blockchainCertId,
             contractType,
-            type: row.type || templateType,
-            specialty: resolvedSpecialty,
-            status: "ACTIVE",
-            issueDate: new Date(),
+            type:             row.type || templateType,
+            specialty:        resolvedSpecialty,
+            status:           "ACTIVE",
+            issueDate:        new Date(),
           },
         });
+      } catch (dbErr) {
+        console.error(`DB save failed for ${matricule}:`, dbErr.message);
+        errors.push({ matricule, error: `DB error: ${dbErr.message}` });
+        continue;
+      }
 
-        // mark student as graduated
+      // ── 5. Non-critical side effects (never block created++) ──
+      try {
         await prisma.user.update({
           where: { id: student.id },
-          data: { isGraduated: true },
+          data:  { isGraduated: true },
         });
+      } catch (graduatedErr) {
+        console.error(`isGraduated update failed for ${matricule}:`, graduatedErr.message);
+      }
 
-        // notify student by email
-        try {
+      try {
         await sendEmail(
           student.email,
           "Your Certificate is Ready 🎓",
@@ -692,14 +824,11 @@ const importDiplomas = async (req, res) => {
           </p>`,
         );
       } catch (emailErr) {
-        console.error(`Email failed for matricule ${row.matricule}:`, emailErr.message);
+        console.error(`Email failed for ${matricule}:`, emailErr.message);
       }
 
-        created++;
-      } catch (rowErr) {
-        console.error(`Error on matricule ${row.matricule}:`, rowErr.message);
-        errors.push({ matricule: row.matricule, error: rowErr.message });
-      }
+      // ── 6. Only count after certificate is confirmed in DB ────
+      created++;
     }
 
     res.status(200).json({
@@ -714,60 +843,62 @@ const importDiplomas = async (req, res) => {
   }
 };
 
-// get statistics
 const getStatistics = async (req, res) => {
   try {
-    const totalMaster = await prisma.certificate.count({ where: { type: "MASTER" } });
-    const totalEngineer = await prisma.certificate.count({ where: { type: "ENGINEER" } });
-    const totalInternship = await prisma.certificate.count({ where: { contractType: "INTERNSHIP" } });
-    const totalScolarite = await prisma.certificate.count({ where: { contractType: "STUDY" } });
-    const totalDiploma = await prisma.certificate.count({ where: { contractType: "DIPLOMA" } });
-    const totalRank = await prisma.certificate.count({ where: { contractType: "RANK" } });
+    const [typeGroups, topSpecialties, monthlyRaw, dailyRaw] = await Promise.all([
+      prisma.certificate.groupBy({
+        by: ["type", "contractType"],
+        _count: { id: true },
+      }),
 
-    const DistributionByType = {
-      MASTER: totalMaster,
-      ENGINEER: totalEngineer,
-      INTERNSHIP: totalInternship,
-      SCOLARITE: totalScolarite,
-      DIPLOMA: totalDiploma,
-      RANK: totalRank,
-    };
+      prisma.certificate.groupBy({
+        by: ["specialty"],
+        _count: { specialty: true },
+        orderBy: { _count: { specialty: "desc" } },
+        take: 5,
+      }),
 
-    const topSpecialties = await prisma.certificate.groupBy({
-      by: ["specialty"],
-      _count: { specialty: true },
-      orderBy: { _count: { specialty: "desc" } },
-      take: 5,
+      prisma.$queryRaw`
+        SELECT
+          TO_CHAR("issueDate" AT TIME ZONE 'UTC', 'Mon') AS month,
+          COUNT(*)::int AS count
+        FROM "Certificate"
+        WHERE EXTRACT(YEAR FROM "issueDate" AT TIME ZONE 'UTC') = EXTRACT(YEAR FROM NOW())
+        GROUP BY TO_CHAR("issueDate" AT TIME ZONE 'UTC', 'Mon')
+      `,
+
+      prisma.$queryRaw`
+        SELECT
+          TO_CHAR("verifiedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+          COUNT(*)::int AS count
+        FROM "Verification"
+        WHERE "verifiedAt" >= NOW() - INTERVAL '30 days'
+        GROUP BY TO_CHAR("verifiedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+        ORDER BY day ASC
+      `,
+    ]);
+
+    const DistributionByType = { MASTER: 0, ENGINEER: 0, INTERNSHIP: 0, SCOLARITE: 0, DIPLOMA: 0, RANK: 0 };
+    typeGroups.forEach(g => {
+      if (g.type === "MASTER")             DistributionByType.MASTER      += g._count.id;
+      if (g.type === "ENGINEER")           DistributionByType.ENGINEER    += g._count.id;
+      if (g.contractType === "INTERNSHIP") DistributionByType.INTERNSHIP  += g._count.id;
+      if (g.contractType === "STUDY")      DistributionByType.SCOLARITE   += g._count.id;
+      if (g.contractType === "DIPLOMA")    DistributionByType.DIPLOMA     += g._count.id;
+      if (g.contractType === "RANK")       DistributionByType.RANK        += g._count.id;
     });
 
-    const certificates = await prisma.certificate.findMany();
     const monthlyIssuance = {};
-    certificates.forEach((cert) => {
-      const month = new Date(cert.issueDate).toLocaleString("fr-FR", {
-        month: "short",
-      });
-      monthlyIssuance[month] = (monthlyIssuance[month] || 0) + 1;
-    });
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const verifications = await prisma.verification.findMany({
-      where: { verifiedAt: { gte: thirtyDaysAgo } },
+    monthlyRaw.forEach(row => {
+      monthlyIssuance[row.month] = Number(row.count);
     });
 
     const verificationsPerDay = {};
-    verifications.forEach((v) => {
-      const day = new Date(v.verifiedAt).toISOString().split("T")[0];
-      verificationsPerDay[day] = (verificationsPerDay[day] || 0) + 1;
+    dailyRaw.forEach(row => {
+      verificationsPerDay[row.day] = Number(row.count);
     });
 
-    res.status(200).json({
-      DistributionByType,
-      topSpecialties,
-      monthlyIssuance,
-      verificationsPerDay,
-    });
+    res.status(200).json({ DistributionByType, topSpecialties, monthlyIssuance, verificationsPerDay });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "an error occurred in the server" });
@@ -785,7 +916,6 @@ const downloadCertificate = async (req, res) => {
 
     if (!certificate) return res.status(404).json({ message: "Certificate not found" });
 
-    // --- Early return: if PDF already uploaded, stream directly from Filebase ---
     if (certificate.ipfsHash && certificate.ipfsHash !== "pending") {
       const ipfsUrl = `https://ipfs.filebase.io/ipfs/${certificate.ipfsHash}`;
       const response = await axios.get(ipfsUrl, { responseType: "stream" });
@@ -794,20 +924,14 @@ const downloadCertificate = async (req, res) => {
       return response.data.pipe(res);
     }
 
-    // --- Step 1: Fetch the source-of-truth data from the blockchain ---
     console.log("[downloadCertificate] Fetching blockchain data for cert:", id);
     const chainData = await getCertificateData(certificate.contractType, certificate.blockchainCertId);
     console.log("[downloadCertificate] Blockchain data received:", JSON.stringify(chainData));
 
-    // --- Step 2: Build the PDF data object from blockchain (immutable) ---
-    // Fields the blockchain stores — these are authoritative and tamper-proof.
-    // Fields the blockchain does NOT store (birthDate, birthPlace, faculty numbers etc.)
-    // are pulled from certData as cosmetic/layout info only.
     const prismaFallback = certificate.certData || {};
     const templateType = prismaFallback.templateType || certificate.contractType.toLowerCase();
 
     let pdfData = {
-      // Always from Prisma (non-academic, layout/identity fields)
       uniqueCode:   prismaFallback.uniqueCode   || certificate.uniqueCode,
       birthDate:    prismaFallback.birthDate     || certificate.student?.dateOfBirth || "",
       birthPlace:   prismaFallback.birthPlace    || certificate.student?.placeOfBirth || "",
@@ -818,7 +942,6 @@ const downloadCertificate = async (req, res) => {
     };
 
     if (certificate.contractType === "DIPLOMA") {
-      // Blockchain fields: studentName, degreeName, fieldOfStudy, issueDate, (graduationDate via issueDate)
       const issueDateMs = Number(chainData.issueDate) * 1000;
       const issueDateStr = new Date(issueDateMs).toLocaleDateString("fr-FR");
       pdfData = {
@@ -831,7 +954,6 @@ const downloadCertificate = async (req, res) => {
       };
 
     } else if (certificate.contractType === "INTERNSHIP") {
-      // Blockchain fields: studentName, companyName, internshipRole, internshipCity, startDate, endDate, issueDate
       const fmt = (ts) => new Date(Number(ts) * 1000).toLocaleDateString("fr-FR");
       pdfData = {
         ...pdfData,
@@ -847,7 +969,6 @@ const downloadCertificate = async (req, res) => {
       };
 
     } else if (certificate.contractType === "STUDY") {
-      // Blockchain fields: studentName, programName, academicYear, certificateType, issueDate
       pdfData = {
         ...pdfData,
         fullName:     chainData.studentName,
@@ -859,7 +980,6 @@ const downloadCertificate = async (req, res) => {
       };
 
     } else if (certificate.contractType === "RANK") {
-      // Blockchain fields: studentName(via matricule), rank, average, speciality, branch, year, session, issueDate
       const issueDateStr = new Date(Number(chainData.issueDate) * 1000).toLocaleDateString("fr-FR");
       pdfData = {
         ...pdfData,
@@ -875,19 +995,16 @@ const downloadCertificate = async (req, res) => {
       };
     }
 
-    // --- Step 3: Generate the PDF from blockchain-sourced data ---
     console.log("[downloadCertificate] Generating PDF from blockchain data...");
     const generateDiplomaPDF = require("../utils/generatePDF");
     const pdfPath = await generateDiplomaPDF(pdfData, templateType);
     console.log("[downloadCertificate] PDF generated at:", pdfPath);
-    
-  // --- Step 4: Stream local file to client immediately ---
+
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="certificate_${id}.pdf"`);
     const fileStream = fs.createReadStream(pdfPath);
     fileStream.pipe(res);
 
-    // --- Step 5: Upload to Filebase in background after streaming starts ---
     fileStream.on("end", async () => {
       try {
         const ipfsHash = await uploadPDFtoPinata(pdfPath);
@@ -903,8 +1020,6 @@ const downloadCertificate = async (req, res) => {
       return res.status(500).json({ error: "PDF generation failed — file not found on disk" });
     }
 
- 
-
   } catch (err) {
     console.error("[downloadCertificate] ERROR:", err.message);
     console.error(err.stack);
@@ -914,38 +1029,55 @@ const downloadCertificate = async (req, res) => {
 
 const exportCertificates = async (req, res) => {
   try {
-    const certificates = await prisma.certificate.findMany({
-      include: { student: true },
-      orderBy: { issueDate: "desc" },
-    });
+    const CHUNK = 500;
+    let skip = 0;
+    const rows = [];
 
-    const rows = certificates.map((cert) => ({
-      "Student Name": cert.student?.fullName || "",
-      Matricule: cert.student?.matricule || "",
-      Type: cert.type || "",
-      Specialty: cert.specialty || "",
-      "Contract Type": cert.contractType || "",
-      "IPFS Hash": cert.ipfsHash || "",
-      "Blockchain Cert ID": cert.blockchainCertId || "",
-      "Issue Date": new Date(cert.issueDate).toLocaleDateString("fr-FR"),
-      Status: cert.status || "",
-      "Unique Code": cert.uniqueCode || "",
-    }));
+    while (true) {
+      const batch = await prisma.certificate.findMany({
+        select: {
+          type: true,
+          specialty: true,
+          contractType: true,
+          ipfsHash: true,
+          blockchainCertId: true,
+          issueDate: true,
+          status: true,
+          uniqueCode: true,
+          student: { select: { fullName: true, matricule: true } },
+        },
+        orderBy: { issueDate: "desc" },
+        take: CHUNK,
+        skip,
+      });
+
+      if (batch.length === 0) break;
+
+      batch.forEach((cert) => rows.push({
+        "Student Name":       cert.student?.fullName   || "",
+        "Matricule":          cert.student?.matricule  || "",
+        "Type":               cert.type               || "",
+        "Specialty":          cert.specialty           || "",
+        "Contract Type":      cert.contractType        || "",
+        "IPFS Hash":          cert.ipfsHash            || "",
+        "Blockchain Cert ID": cert.blockchainCertId    || "",
+        "Issue Date":         new Date(cert.issueDate).toLocaleDateString("fr-FR"),
+        "Status":             cert.status              || "",
+        "Unique Code":        cert.uniqueCode          || "",
+      }));
+
+      skip += CHUNK;
+      if (batch.length < CHUNK) break;
+    }
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
+    const workbook  = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Certificates");
 
     const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=certificates.xlsx",
-    );
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    );
+    res.setHeader("Content-Disposition", "attachment; filename=certificates.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.send(buffer);
   } catch (err) {
     console.error(err);
@@ -978,38 +1110,55 @@ const downloadRequestFile = async (req, res) => {
 
 const exportRequests = async (req, res) => {
   try {
-    const requests = await prisma.request.findMany({
-      include: { student: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const CHUNK = 500;
+    let skip = 0;
+    const rows = [];
 
-    const rows = requests.map((req) => ({
-      "Request ID": req.id.substring(0, 8) + "...",
-      "Student Name": req.student?.fullName || "",
-      Matricule: req.student?.matricule || "",
-      "Document Type": req.documentType || "",
-      Reason: req.reason || "",
-      Priority: req.priority || "",
-      "Submitted Date": new Date(req.createdAt).toLocaleDateString("fr-FR"),
-      Status: req.status || "PENDING",
-      "IPFS Hash": req.ipfsHash || "",
-      "Blockchain Doc ID": req.blockchainDocId || "",
-    }));
+    while (true) {
+      const batch = await prisma.request.findMany({
+        select: {
+          id: true,
+          documentType: true,
+          reason: true,
+          priority: true,
+          status: true,
+          ipfsHash: true,
+          blockchainDocId: true,
+          createdAt: true,
+          student: { select: { fullName: true, matricule: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: CHUNK,
+        skip,
+      });
+
+      if (batch.length === 0) break;
+
+      batch.forEach((r) => rows.push({
+        "Request ID":        r.id.substring(0, 8) + "...",
+        "Student Name":      r.student?.fullName  || "",
+        "Matricule":         r.student?.matricule || "",
+        "Document Type":     r.documentType       || "",
+        "Reason":            r.reason             || "",
+        "Priority":          r.priority           || "",
+        "Submitted Date":    new Date(r.createdAt).toLocaleDateString("fr-FR"),
+        "Status":            r.status             || "PENDING",
+        "IPFS Hash":         r.ipfsHash           || "",
+        "Blockchain Doc ID": r.blockchainDocId    || "",
+      }));
+
+      skip += CHUNK;
+      if (batch.length < CHUNK) break;
+    }
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
+    const workbook  = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Requests");
 
     const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=requests.xlsx",
-    );
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    );
+    res.setHeader("Content-Disposition", "attachment; filename=requests.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.send(buffer);
   } catch (err) {
     console.error(err);
@@ -1019,35 +1168,101 @@ const exportRequests = async (req, res) => {
 
 const getAuditTrail = async (req, res) => {
   try {
-    const certificates = await prisma.certificate.findMany({
-      include: { student: true },
-      orderBy: { issueDate: "desc" },
-    });
+    const page    = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit   = Math.min(50, parseInt(req.query.limit) || 10);
+    const skip    = (page - 1) * limit;
+
+    const { search, status, contractType } = req.query;
+
+    const where = {};
+    if (status && status !== "ALL") where.status = status;
+    if (contractType && contractType !== "ALL") where.contractType = contractType;
+    if (search) {
+      where.OR = [
+        { student: { fullName:  { contains: search, mode: "insensitive" } } },
+        { student: { matricule: { contains: search, mode: "insensitive" } } },
+        { specialty:        { contains: search, mode: "insensitive" } },
+        { uniqueCode:       { contains: search, mode: "insensitive" } },
+        { blockchainCertId: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const [total, certificates] = await Promise.all([
+      prisma.certificate.count({ where }),
+      prisma.certificate.findMany({
+        where,
+        select: {
+          id: true,
+          uniqueCode: true,
+          type: true,
+          specialty: true,
+          contractType: true,
+          blockchainCertId: true,
+          ipfsHash: true,
+          status: true,
+          issueDate: true,
+          student: {
+            select: {
+              fullName: true,
+              matricule: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: { issueDate: "desc" },
+        take: limit,
+        skip,
+      }),
+    ]);
 
     const trail = certificates.map((cert) => ({
-      id: cert.id,
-      uniqueCode: cert.uniqueCode,
+      ...cert,
       studentName: cert.student?.fullName || "Unknown",
-      studentAvatar: cert.student?.avatar || null,
-      matricule: cert.student?.matricule || "",
-      type: cert.type || "",
-      specialty: cert.specialty || "",
-      contractType: cert.contractType || "",
-      blockchainCertId: cert.blockchainCertId || "",
-      ipfsHash: cert.ipfsHash || "",
-      ipfsUrl: cert.ipfsHash
-        ? `https://ipfs.filebase.io/ipfs/${cert.ipfsHash}`
-        : null,
-      status: cert.status,
-      issueDate: cert.issueDate,
+      matricule:   cert.student?.matricule || "",
+      ipfsUrl:     cert.ipfsHash ? `https://ipfs.filebase.io/ipfs/${cert.ipfsHash}` : null,
     }));
 
-    res.status(200).json({ trail });
+    res.status(200).json({
+      trail,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "an error occurred in the server" });
   }
 };
+const getAuditStats = async (req, res) => {
+  try {
+    const [statusGroups, contractGroups, total] = await Promise.all([
+      prisma.certificate.groupBy({ by: ["status"],       _count: { id: true } }),
+      prisma.certificate.groupBy({ by: ["contractType"], _count: { id: true } }),
+      prisma.certificate.count(),
+    ]);
+
+    const stats = { total, active: 0, revoked: 0, diploma: 0, internship: 0, study: 0, rank: 0 };
+    statusGroups.forEach(g => {
+      if (g.status === "ACTIVE")  stats.active  = g._count.id;
+      if (g.status === "REVOKED") stats.revoked = g._count.id;
+    });
+    contractGroups.forEach(g => {
+      if (g.contractType === "DIPLOMA")    stats.diploma    = g._count.id;
+      if (g.contractType === "INTERNSHIP") stats.internship = g._count.id;
+      if (g.contractType === "STUDY")      stats.study      = g._count.id;
+      if (g.contractType === "RANK")       stats.rank       = g._count.id;
+    });
+
+    res.status(200).json(stats);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "an error occurred in the server" });
+  }
+};
+
 const uploadAvatar = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1081,6 +1296,366 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
+const issueOne = async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      studentId,
+      email,
+      templateType,
+      branch,
+      speciality,
+      class: level,
+      graduationDate,
+      issueDate,
+    } = req.body;
+
+    if (!firstName)    return res.status(400).json({ message: "First name is required" });
+    if (!lastName)     return res.status(400).json({ message: "Last name is required" });
+    if (!studentId)    return res.status(400).json({ message: "Student ID is required" });
+    if (!templateType) return res.status(400).json({ message: "templateType is required" });
+    if (!graduationDate && !issueDate)
+      return res.status(400).json({ message: "Date is required" });
+
+    if (templateType === "diploma") {
+      if (!speciality)          return res.status(400).json({ message: "Speciality is required" });
+      if (!req.body.mention)    return res.status(400).json({ message: "Mention is required" });
+      if (!req.body.faculty)    return res.status(400).json({ message: "Faculty is required" });
+      if (!req.body.sectionNum) return res.status(400).json({ message: "Section N° is required" });
+      if (!req.body.facultyNum) return res.status(400).json({ message: "Faculty N° is required" });
+      if (!req.body.year)       return res.status(400).json({ message: "Year is required" });
+    }
+
+    if (templateType === "scolarite") {
+      if (!speciality)             return res.status(400).json({ message: "Speciality is required" });
+      if (!req.body.mention)       return res.status(400).json({ message: "Mention is required" });
+      if (!req.body.faculty)       return res.status(400).json({ message: "Faculty is required" });
+      if (!req.body.sectionNum)    return res.status(400).json({ message: "Section N° is required" });
+      if (!req.body.facultyNum)    return res.status(400).json({ message: "Faculty N° is required" });
+      if (!req.body.year)          return res.status(400).json({ message: "Year is required" });
+      if (!req.body.academicYear)  return res.status(400).json({ message: "Academic Year is required" });
+    }
+
+    if (templateType === "internship") {
+      if (!speciality)              return res.status(400).json({ message: "Internship role is required" });
+      if (!req.body.company)        return res.status(400).json({ message: "Company is required" });
+      if (!req.body.internshipCity) return res.status(400).json({ message: "City is required" });
+      if (!req.body.startDate)      return res.status(400).json({ message: "Start date is required" });
+      if (!req.body.endDate)        return res.status(400).json({ message: "End date is required" });
+    }
+
+    if (templateType === "rank") {
+      if (!branch)           return res.status(400).json({ message: "Branch is required" });
+      if (!speciality)       return res.status(400).json({ message: "Speciality is required" });
+      if (!level)            return res.status(400).json({ message: "Class is required" });
+      if (!req.body.rank)    return res.status(400).json({ message: "Rank is required" });
+      if (!req.body.average) return res.status(400).json({ message: "Average is required" });
+      if (!req.body.credits) return res.status(400).json({ message: "Credits are required" });
+      const rankNum    = Number(req.body.rank);
+      const avgNum     = Number(req.body.average);
+      const creditsNum = Number(req.body.credits);
+      if (isNaN(rankNum) || rankNum <= 0)
+        return res.status(400).json({ message: "Rank must be a positive number" });
+      if (isNaN(avgNum) || avgNum < 0 || avgNum > 20)
+        return res.status(400).json({ message: "Average must be between 0 and 20" });
+      if (isNaN(creditsNum) || creditsNum <= 0)
+        return res.status(400).json({ message: "Credits must be a positive number" });
+    }
+
+    const date = templateType === "diploma" ? graduationDate : issueDate;
+
+    const student = await prisma.user.findUnique({
+      where: { matricule: String(studentId) },
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: `Student with matricule "${studentId}" not found. Make sure they are synced first.` });
+    }
+
+    const contractType =
+      templateType === "internship"
+        ? "INTERNSHIP"
+        : templateType === "scolarite"
+          ? "STUDY"
+          : templateType === "rank"
+            ? "RANK"
+            : "DIPLOMA";
+
+    const existingCert = await prisma.certificate.findFirst({
+      where: {
+        studentId: student.id,
+        contractType,
+        status: "ACTIVE",
+      },
+    });
+
+    if (existingCert) {
+      return res.status(400).json({ message: "An active certificate of this type already exists for this student." });
+    }
+
+    const uniqueCode = `CERT-${student.matricule}-${Date.now()}`;
+    let blockchainResult;
+
+    if (contractType === "DIPLOMA") {
+      blockchainResult = await issueDiploma({
+        studentId: student.matricule,
+        studentName: student.fullName,
+        degreeName: templateType,
+        fieldOfStudy: speciality || "",
+        ipfsHash: "pending",
+      });
+
+    } else if (contractType === "INTERNSHIP") {
+      const start = new Date(req.body.startDate);
+      const end   = new Date(req.body.endDate);
+
+      if (end <= start) {
+        return res.status(400).json({ message: "End date must be after start date" });
+      }
+
+      const endDateAdj = new Date(end);
+      endDateAdj.setDate(endDateAdj.getDate() + 1);
+
+      blockchainResult = await issueInternship({
+        studentId: student.matricule,
+        studentName: student.fullName,
+        companyName: req.body.company,
+        internshipRole: speciality.trim(),
+        internshipCity: req.body.internshipCity,
+        ipfsHash: "pending",
+        startDate: start.toISOString(),
+        endDate: endDateAdj.toISOString(),
+      });
+
+    } else if (contractType === "RANK") {
+      try {
+        const rankPayload = {
+          matricule:  student.matricule,
+          name:       firstName,
+          familyName: lastName,
+          speciality: speciality || "",
+          branch:     branch || "",
+          year:       level || "",
+          rank:       Number(req.body.rank),
+          average:    String(req.body.average),
+          credits:    Number(req.body.credits),
+          session:    String(req.body.session || "NORMAL").toLowerCase().includes("rattrapage")
+            ? "RATTRAPAGE"
+            : "NORMAL",
+        };
+
+        try {
+          await addStudentToRankRegistry(rankPayload);
+        } catch (addErr) {
+          if (addErr.message?.toLowerCase().includes("already exists")) {
+            await updateStudentInRankRegistry(rankPayload);
+          } else {
+            throw addErr;
+          }
+        }
+
+        await prisma.user.update({
+          where: { id: student.id },
+          data: { blockchainRegistered: true },
+        });
+      } catch (err) {
+        console.error(`Rank registry error for ${student.matricule}:`, err.message);
+        throw err;
+      }
+
+      blockchainResult = await issueRankDocument({
+        matricule:    student.matricule,
+        documentType: "Rank Certificate",
+        description:  `Rank ${Number(req.body.rank)} — ${speciality || ""}`,
+        ipfsHash:     "pending",
+      });
+
+    } else {
+      blockchainResult = await issueStudyCertificate({
+        studentId: student.matricule,
+        studentName: student.fullName,
+        programName: speciality || "",
+        academicYear: req.body.academicYear || date,
+        certificateType: templateType,
+        ipfsHash: "pending",
+      });
+    }
+
+    const specialityMap = {
+      "cp-mi": "Mathématiques et Informatique",
+      "cp-st": "Sciences et Technologies",
+    };
+    const specialityKey = `${speciality}-${branch}`.toLowerCase();
+    const resolvedSpecialty = specialityMap[specialityKey] || speciality || "";
+
+    await prisma.certificate.create({
+      data: {
+        studentId: student.id,
+        uniqueCode,
+        ipfsHash: null,
+        certData: {
+          fullName:      student.fullName,
+          matricule:     student.matricule,
+          specialty:     resolvedSpecialty,
+          faculty:       req.body.faculty       || "",
+          sectionNum:    String(req.body.sectionNum || ""),
+          facultyNum:    String(req.body.facultyNum || ""),
+          mention:       req.body.mention        || "",
+          graduationDate: graduationDate          || "",
+          issueDate:     new Date().toISOString().split("T")[0],
+          uniqueCode,
+          academicYear:  req.body.academicYear   || "",
+          year:          req.body.year           || "",
+          company:       req.body.company        || "",
+          duration:      req.body.duration       || "",
+          startDate:     req.body.startDate      || "",
+          birthDate:     student.dateOfBirth     || "",
+          birthPlace:    student.placeOfBirth    || "",
+          endDate:       req.body.endDate        || "",
+          internshipCity: req.body.internshipCity || "",
+          level:         level                   || "",
+          field:         speciality              || "",
+          average:       req.body.average        || "",
+          rank:          req.body.rank           || "",
+          branch:        branch                  || "",
+          class:         level                   || "",
+          templateType,
+        },
+        blockchainCertId: blockchainResult.blockchainCertId,
+        contractType,
+        type:      templateType,
+        specialty: resolvedSpecialty,
+        status:    "ACTIVE",
+        issueDate: new Date(),
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: student.id },
+      data: { isGraduated: true },
+    });
+
+    try {
+      await sendEmail(
+        student.email,
+        "Your Certificate is Ready 🎓",
+        `<h2>Congratulations ${student.fullName}!</h2>
+        <p>Your certificate is now available on your dashboard.</p>
+        <a href="${process.env.FRONTEND_URL}/login"
+          style="display:inline-block;padding:12px 24px;background-color:#4F46E5;color:white;text-decoration:none;border-radius:8px;font-weight:bold;margin-top:16px;">
+          Login to Dashboard
+        </a>`,
+      );
+    } catch (emailErr) {
+      console.error(`Email failed for ${student.matricule}:`, emailErr.message);
+    }
+
+    res.status(201).json({ message: "Certificate issued successfully", uniqueCode });
+
+  } catch (err) {
+    console.error("[issueOne] ERROR:", err.message);
+    res.status(500).json({ error: "An error occurred on the server", detail: err.message });
+  }
+};
+
+const getStudents = async (req, res) => {
+  try {
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 10);
+    const skip  = (page - 1) * limit;
+    const { search, status } = req.query;
+
+    const where = { role: "STUDENT" };
+    if (status === "graduated")   where.isGraduated = true;
+    if (status === "ungraduated") where.isGraduated = false;
+    if (search) {
+      where.OR = [
+        { fullName:  { contains: search, mode: "insensitive" } },
+        { matricule: { contains: search, mode: "insensitive" } },
+        { email:     { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const [total, students, graduated, withCerts] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          fullName: true,
+          matricule: true,
+          email: true,
+          dateOfBirth: true,
+          placeOfBirth: true,
+          isGraduated: true,
+          avatar: true,
+          createdAt: true,
+          _count: { select: { certificates: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip,
+      }),
+      prisma.user.count({ where: { role: "STUDENT", isGraduated: true } }),
+      prisma.user.count({ where: { role: "STUDENT", certificates: { some: {} } } }),
+    ]);
+
+    res.status(200).json({
+      students,
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      stats: { total, graduated, ungraduated: total - graduated, withCerts },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "An error occurred on the server" });
+  }
+};
+
+const getStudentCertificates = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const student = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, fullName: true, matricule: true, avatar: true },
+    });
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    const certificates = await prisma.certificate.findMany({
+      where: { studentId: id },
+      orderBy: { issueDate: "desc" },
+    });
+
+    res.status(200).json({ student, certificates });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "An error occurred on the server" });
+  }
+};
+
+const deleteStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const student = await prisma.user.findUnique({ where: { id } });
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (student.role !== "STUDENT") return res.status(403).json({ message: "Cannot delete non-student users" });
+
+    const certs = await prisma.certificate.findMany({ where: { studentId: id }, select: { id: true } });
+    const certIds = certs.map(c => c.id);
+    if (certIds.length > 0) {
+      await prisma.verification.deleteMany({ where: { certificateId: { in: certIds } } });
+      await prisma.certificate.deleteMany({ where: { studentId: id } });
+    }
+    await prisma.request.deleteMany({ where: { studentId: id } });
+    await prisma.user.delete({ where: { id } });
+
+    res.status(200).json({ message: "Student deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "An error occurred on the server" });
+  }
+};
+
 module.exports = {
   changePassword,
   revokeCertificate,
@@ -1099,5 +1674,10 @@ module.exports = {
   exportRequests,
   downloadRequestFile,
   getAuditTrail,
+  getAuditStats,
   uploadAvatar,
+  issueOne,
+  getStudents,
+  getStudentCertificates,
+  deleteStudent,
 };

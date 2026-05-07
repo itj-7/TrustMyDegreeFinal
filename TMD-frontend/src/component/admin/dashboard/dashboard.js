@@ -183,7 +183,7 @@ function Dashboard() {
         {/* {statusMsg && <div className={styles.successBanner}>{statusMsg}</div>} */}
 
         <div>
-          <h5>sync students</h5>
+          <h5>Sync students</h5>
           <div className={styles.actions}>
             <div className={styles.ho}>
               <img
@@ -200,13 +200,13 @@ function Dashboard() {
         </div>
 
         <div>
-          <h5>Quick Actions</h5>
+          <h5>Issue Documents</h5>
           <div className={styles.actions}>
             <div className={styles.ho}>
               <Link to="/admin/add">
                 <img src="/add.png" alt="add" className={styles.add} />
               </Link>
-              <h3>Issue New Certificate</h3>
+              <h3>Issue New Document</h3>
             </div>
             <img src="/chapeau.png" alt="chapeau" className={styles.chap} />
           </div>

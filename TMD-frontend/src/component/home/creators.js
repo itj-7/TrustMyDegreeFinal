@@ -1,0 +1,194 @@
+import styles from "./Creators.module.css";
+import { useEffect } from "react";
+/* eslint-disable jsx-a11y/anchor-is-valid */
+function Creators() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  return (
+    <div className={styles["main-content"]}>
+      <div className={styles.section1}>
+        <h3>Meet the team</h3>
+        <h1>
+          Built by students,
+          <br /> secured by <span>blockchain</span>
+        </h1>
+        <p>
+          We are 5 engineering students from ENSTA who built TrustMyDegree a
+          platform to eliminate diploma fraud using decentralized blockchain
+          technology.
+        </p>
+      </div>
+
+      <nav className={styles.tools}>
+        <h3>Tech stack</h3>
+        <div>
+          <h4 className={styles.blue}>React.js</h4>
+          <h4 className={styles.blue}>css</h4>
+          <h4 className={styles.green}>Node.js</h4>
+          <h4 className={styles.green}>Blockchain</h4>
+          <h4 className={styles.purple}>Etheruim.js</h4>
+          <h4 className={styles.purple}>Solidity.js</h4>
+          <h4 className={styles.orange}>express.js</h4>
+          <h4 className={styles.orange}>PostgreSQL.js</h4>
+        </div>
+      </nav>
+
+      <div className={styles.section2}>
+        <div className={styles.title}>
+          <h3>The people behind it</h3>
+          <p>5 developers · ENSTA Algeria · 2026</p>
+        </div>
+
+        <div className={styles.members}>
+          <div className={styles.member}>
+            <div className={`${styles.avatar} ${styles["av-amber"]}`}>B</div>
+            <h4 className={styles.name}>Arar Bouchra Manel</h4>
+            <h4 className={styles.role}>Frontend Lead</h4>
+            <p className={styles.year}> 2nd Year · MI</p>
+            <p className={styles.desc}>
+              {" "}
+              Fully owned the frontend, enforcing structure, performance, and a
+              clean, uncompromising user experience.
+            </p>
+            <div className={styles.links}>
+              <a
+                href="https://github.com/wolfey-cmyk"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                GitHub
+              </a>
+              <a
+                href=""
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+
+          <div className={styles.member}>
+            <div className={`${styles.avatar} ${styles["av-purple"]}`}>N</div>
+            <h4 className={styles.name}>Benloulou Nadjah Cirine</h4>
+            <h4 className={styles.role}>Backend lead & Designer</h4>
+            <p className={styles.year}> 2nd Year · MI</p>
+            <p className={styles.desc}>Built the backend infrastructure powering TrustMyDegree handling  student and admin workflows, document request management, and data reporting. Co-designed the UI/UX of the platform alongside the team, contributing to the overall look and feel from the landing page to the admin dashboard.</p>
+            <div className={styles.links}>
+              <a
+                href="https://github.com/BENLOULOUNADJAHCIRINE"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/nadjah-cirine-benloulou-47118a34a/"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+          <div className={styles.member}>
+            <div className={`${styles.avatar} ${styles["av-pink"]}`}>I</div>
+            <h4 className={styles.name}>Bedad ines</h4>
+            <h4 className={styles.role}>Team lead & Blockchain lead</h4>
+            <p className={styles.year}> 2nd Year · MI</p>
+            <p className={styles.desc}>built the blockchain layer from scratch. Solidity contracts,
+        Hardhat deployments, and every on-chain decision that matters ,all while keeping
+        the team moving forward.</p>
+            <div className={styles.links}>
+              <a
+                href="https://github.com/ines-bedad"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/ines-bedad-12111035b"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+          <div className={styles.member}>
+            <div className={`${styles.avatar} ${styles["av-orange"]}`}>K</div>
+            <h4 className={styles.name}>Khlil Ikram</h4>
+            <h4 className={styles.role}>Design lead & Backend developer</h4>
+            <p className={styles.year}> 2nd Year · MI</p>
+            <p className={styles.desc}>intoduction</p>
+            <div className={styles.links}>
+              <a
+                href=""
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                GitHub
+              </a>
+              <a
+                href=""
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+
+          <div className={styles.member}>
+            <div className={`${styles.avatar} ${styles["av-teal"]}`}>R</div>
+            <h4 className={styles.name}>Baghdadi Abderrahim Wael</h4>
+            <h4 className={styles.role}>
+              Blockchain developer & Backend developer
+            </h4>
+            <p className={styles.year}> 2nd Year · MI</p>
+            <p className={styles.desc}>Connected the dots between backend and blockchain. Architected the
+        integration layer that kept both sides in sync, and the
+        system whole.</p>
+            <div className={styles.links}>
+              <a
+                href="https://github.com/itj-7"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/abderrahim-wael-baghdadi-906616326"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkBtn}
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer className={styles.footer}>
+        <h3>
+          © 2026 <span>TrustMyDegree</span> · ENSTA Algeria · All rights
+          reserved
+        </h3>
+      </footer>
+    </div>
+  );
+}
+
+export default Creators;

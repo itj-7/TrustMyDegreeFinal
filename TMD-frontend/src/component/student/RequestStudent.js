@@ -1,8 +1,9 @@
+// eslint-disable-next-line no-unused-vars
 import styles from "./RequestStudent.module.css";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
-import toast, { Toaster } from "react-hot-toast";
+import {toast} from "react-hot-toast";
 function RequestStudent() {
   const editorRef = useRef(null);
   const [user, setUser] = useState(null);
@@ -12,7 +13,9 @@ function RequestStudent() {
 
   const [priority, setPriority] = useState("");
   const [openMenu, setOpenMenu] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [success, setSuccess] = useState("");
+  // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState("");
   const navigate = useNavigate();
 

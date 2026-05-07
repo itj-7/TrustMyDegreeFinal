@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./Home.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import { Link } from "react-router-dom";
 function Home() {
   const navigate = useNavigate();
   const editorRef = useRef(null);
@@ -63,7 +63,7 @@ function Home() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    fetch(`${process.env.REACT_APP_API_URL}/contact`, {
+    fetch(`${process.env.REACT_APP_API_URL}/api/contact`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -360,11 +360,24 @@ function Home() {
               The world's most advanced blockchain infrastructure for
               institutional credential verification.
             </p>
+            <Link to="/Creators">
+              <p style={{ textDecoration: "underline", cursor: "pointer" }}>
+                Creators
+              </p>
+            </Link>
           </div>
 
           <div className={styles.platform}>
             <h3> Platform</h3>
-            <p>Institutional Portal</p>
+            <div>
+              <a
+                href="https://ensta.edu.dz/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Institutional Portal
+              </a>
+            </div>
             <div>
               <img src="/fac.png" alt="facebook" />
               <a

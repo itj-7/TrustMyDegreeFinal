@@ -1,6 +1,6 @@
 import styles from "./DashboardStudent.module.css";
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link} from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 
@@ -12,8 +12,6 @@ function DashboardStudent() {
   const [openMenu, setOpenMenu] = useState(false);
   const [badgeModal, setBadgeModal] = useState(null);
   const canvasRef = useRef(null);
-  const navigate = useNavigate();
-
   useEffect(() => {
     api
       .get("/student/dashboard")
@@ -124,7 +122,13 @@ function DashboardStudent() {
     // verified
     ctx.fillStyle = cert.status === "REVOKED" ? "#dc2626" : "#22c55e";
     ctx.font = "bold 12px Arial";
-    ctx.fillText(cert.status === "REVOKED" ? "✗ Revoked on Blockchain" : "✓ Blockchain Verified", 30, 75);
+    ctx.fillText(
+      cert.status === "REVOKED"
+        ? "✗ Revoked on Blockchain"
+        : "✓ Blockchain Verified",
+      30,
+      75,
+    );
 
     // student name
     ctx.fillStyle = "#ffffff";
@@ -261,7 +265,7 @@ function DashboardStudent() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/", { replace: true });
+    window.location.href = "/";
   };
 
   return (
@@ -398,21 +402,18 @@ function DashboardStudent() {
         </div>
 
         <div className={styles.right}>
-          <div className={styles.request}>
-            <img src="/add.png" alt="adding" />
-            <h3>Request documents</h3>
-            <Link to="/student/RequestStudent">
+          <Link to="/student/RequestStudent">
+            <div className={styles.request}>
+              <img src="/add.png" alt="adding" />
+              <h3>Request documents</h3>
               <button>Request now</button>
-            </Link>
-          </div>
+            </div>
+          </Link>
         </div>
       </div>
 
       <div className={styles.policy}>
-        <h4>
-          © 2026 TrustMyDegree ENSTA - Verix Solution for Decentralized Academic
-          Management.
-        </h4>
+        <h4>Secured by TrustMyDegree Protocol •</h4>
       </div>
 
       <div className={styles.login}>
@@ -445,7 +446,7 @@ function DashboardStudent() {
           />
           <div className={styles.subinfo}>
             <h4>{user ? user.name : "guest"}</h4>
-            <p>{user?.isGraduated ? "Graduated ✅" : "Not graduated yet"}</p>
+            <p>{user?.isGraduated ? "Graduated " : "Not graduated yet"}</p>
           </div>
           <img
             src="/exit.png"

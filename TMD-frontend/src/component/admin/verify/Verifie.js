@@ -49,18 +49,18 @@ function Verifie() {
         Verify Your Diploma <span> Instantly </span>
       </h1>
       <p>
-        Enter a diploma ID, QR code, or graduate email to check authenticity
+        Enter a diploma ID, QR code to check authenticity
         against our global blockchain ledger.
       </p>
 
       <form className={styles.verify} onSubmit={handleVerify}>
         <div className={styles.info}>
-          <h6>ID du Certificat</h6>
+          <h6>Certificate Unique Code</h6>
           <div className={styles.inputBox}>
             <img src="/inputee.png" alt="inputee" />
             <input
               type="text"
-              placeholder="#1847"
+              placeholder="CERT-XXXXXXXXX-XXXXXXXXXXX"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
@@ -76,90 +76,119 @@ function Verifie() {
 
       {open && (
         <div className={styles.out}>
-          {/* SUCCESS */}
           {status === "found" && result && (
             <div className={styles.successBox}>
               <button className={styles.close} onClick={() => setOpen(false)}>
                 &times;
               </button>
-              <h3>Certificate Valid </h3>
 
-              <p>
-                <strong>Name:</strong> {result.student.fullName}
-              </p>
-              <p>
-                <strong>Matricule:</strong> {result.student.matricule}
-              </p>
-              <p>
-                <strong>Date of Birth:</strong> {result.student.dateOfBirth}
-              </p>
-              <p>
-                <strong>Place of Birth:</strong> {result.student.placeOfBirth}
-              </p>
-              <p>
-                <strong>Certificate Type:</strong> {result.contractType}
-              </p>
-              <p>
-                <strong>Specialty:</strong>{" "}
-                {result.contractType === "RANK"
-                  ? result.academicData?.speciality
-                  : result.contractType === "DIPLOMA"
-                    ? result.academicData?.fieldOfStudy
-                    : result.contractType === "INTERNSHIP"
-                      ? result.academicData?.internshipRole
-                      : result.contractType === "STUDY"
-                        ? result.academicData?.programName
-                        : "—"}
-              </p>
-              <p>
-                <strong>Issue Date:</strong>{" "}
-                {new Date(result.issueDate).toLocaleDateString("fr-FR")}
-              </p>
-              {result.contractType === "INTERNSHIP" && result.academicData && (
-                <>
-                  <p>
-                    <strong>Company:</strong> {result.academicData.companyName}
-                  </p>
-                  <p>
-                    <strong>City:</strong> {result.academicData.internshipCity}
-                  </p>
-                  <p>
-                    <strong>Start Date:</strong>{" "}
-                    {new Date(
-                      Number(result.academicData.startDate) * 1000,
-                    ).toLocaleDateString("fr-FR")}
-                  </p>
-                  <p>
-                    <strong>End Date:</strong>{" "}
-                    {new Date(
-                      Number(result.academicData.endDate) * 1000,
-                    ).toLocaleDateString("fr-FR")}
-                  </p>
-                </>
-              )}
-              {result.contractType === "RANK" && result.academicData && (
-                <>
-                  <p>
-                    <strong>Rank:</strong> {result.academicData.rank}
-                  </p>
-                  <p>
-                    <strong>Average:</strong> {result.academicData.average}
-                  </p>
-                  <p>
-                    <strong>Speciality:</strong>{" "}
-                    {result.academicData.speciality}
-                  </p>
-                  <p>
-                    <strong>Year:</strong> {result.academicData.year}
-                  </p>
-                  <p>
-                    <strong>Branch:</strong> {result.academicData.branch}
-                  </p>
-                  <p>
-                    <strong>Session:</strong> {result.academicData.session}
-                  </p>
-                </>
-              )}
+              <div className={styles.header}>
+                <img
+                  src="/check.png"
+                  alt="check"
+                  style={{ width: "24px", height: "24px" }}
+                />
+                <h2>VALIDE CERTIFICATE</h2>
+              </div>
+
+              <div className={styles.contentScroll}>
+                <div className={styles.item}>
+                  <span>Nom</span>
+                  {result.student.fullName}
+                </div>
+
+                <div className={styles.item}>
+                  <span>Matricule</span>
+                  {result.student.matricule}
+                </div>
+
+                <div className={styles.item}>
+                  <span>Type de certificat</span>
+                  {result.contractType}
+                </div>
+
+                <div className={styles.item}>
+                  <span>Date d'émission</span>
+                  {new Date(result.issueDate).toLocaleDateString("fr-FR")}
+                </div>
+
+                {result.contractType === "RANK" && result.academicData && (
+                  <>
+                    <div className={styles.item}>
+                      <span>Spécialité</span>
+                      {result.academicData.speciality}
+                    </div>
+                    <div className={styles.item}>
+                      <span>Classement</span>
+                      {result.academicData.rank}
+                    </div>
+                    <div className={styles.item}>
+                      <span>Moyenne</span>
+                      {result.academicData.average}
+                    </div>
+                    <div className={styles.item}>
+                      <span>Année</span>
+                      {result.academicData.year}
+                    </div>
+                    <div className={styles.item}>
+                      <span>Branche</span>
+                      {result.academicData.branch}
+                    </div>
+                    <div className={styles.item}>
+                      <span>Session</span>
+                      {result.academicData.session}
+                    </div>
+                  </>
+                )}
+
+                {result.contractType === "DIPLOMA" && result.academicData && (
+                  <>
+                    <div className={styles.item}>
+                      <span>Filière</span>
+                      {result.academicData.fieldOfStudy}
+                    </div>
+                  </>
+                )}
+
+                {result.contractType === "INTERNSHIP" &&
+                  result.academicData && (
+                    <>
+                      <div className={styles.item}>
+                        <span>Rôle</span>
+                        {result.academicData.internshipRole}
+                      </div>
+                      <div className={styles.item}>
+                        <span>Entreprise</span>
+                        {result.academicData.companyName}
+                      </div>
+                      <div className={styles.item}>
+                        <span>Ville</span>
+                        {result.academicData.internshipCity}
+                      </div>
+                      <div className={styles.item}>
+                        <span>Date de début</span>
+                        {new Date(
+                          Number(result.academicData.startDate) * 1000,
+                        ).toLocaleDateString("fr-FR")}
+                      </div>
+                      <div className={styles.item}>
+                        <span>Date de fin</span>
+                        {new Date(
+                          Number(result.academicData.endDate) * 1000,
+                        ).toLocaleDateString("fr-FR")}
+                      </div>
+                    </>
+                  )}
+
+                {result.contractType === "STUDY" && result.academicData && (
+                  <>
+                    <div className={styles.item}>
+                      <span>Programme</span>
+                      {result.academicData.programName}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
 
