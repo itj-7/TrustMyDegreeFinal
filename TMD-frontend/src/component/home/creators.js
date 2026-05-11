@@ -128,7 +128,7 @@ function Creators() {
             <h4 className={styles.name}>Khlil Ikram</h4>
             <h4 className={styles.role}>Design lead & Backend developer</h4>
             <p className={styles.year}> 2nd Year · MI</p>
-            <p className={styles.desc}>Architected the backend infrastructure, database schema, and JWT authentication system. Led the full UI/UX design of the platform — from the landing page to the admin and student dashboards. Developed the PDF certificate generation engine with multiple templates and integrated key frontend modules with the REST API. shorter</p>
+            <p className={styles.desc}>Architected the backend infrastructure, database schema, and JWT authentication system. Led the full UI/UX design of the platform — from the landing page to the admin and student dashboards. Developed the PDF certificate generation engine with multiple templates and integrated key frontend modules with the REST API.</p>
             <div className={styles.links}>
               <a
                 href="https://github.com/khelilikram"
